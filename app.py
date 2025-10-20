@@ -154,12 +154,11 @@ def update_character_list():
         avatar_path = file_manager.get_character_avatar_path(name)
         
         if avatar_path and os.path.exists(avatar_path):
-            # 通过 Gradio 的 /file= 路由提供头像（支持反向代理）
-            root_path = os.environ.get('GRADIO_ROOT_PATH', '')
-            prefix = root_path if root_path else ''
-            if prefix and not prefix.startswith('/'):
-                prefix = '/' + prefix
-            file_url = f"{prefix}/file={avatar_path}"
+            # 直接构建指向 Nginx 静态目录的 URL
+            # avatar_path 的值类似 'Characters/角色名/avatars/thumbnail_50x50.jpg'
+            # 我们需要从中提取 '角色名/avatars/thumbnail_50x50.jpg' 这部分
+            relative_path = os.path.relpath(avatar_path, start=file_manager.base_path)
+            file_url = f"/avatars/{relative_path}"
             avatar_html = f'<img src="{file_url}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;" alt="Avatar">'
         else:
             # 使用默认头像图标

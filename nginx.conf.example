@@ -79,6 +79,14 @@ http {
         # 放宽请求体尺寸，便于音频文件上传
         client_max_body_size 100M;
 
+        # 直接提供 avatars 目录下的静态图片
+        location /avatars/ {
+            # 【重要】请将此路径替换为 breathVOICE 项目在服务器上的绝对路径
+            alias /path/to/your/breathVOICE/avatars/;
+            expires 30d; # 缓存30天
+            add_header Cache-Control "public";
+        }
+
         # 统一的代理入口，处理所有请求
         location / {
             # 将所有请求都代理到 Gradio 后端 (请替换为您的后端 IP 和端口)
