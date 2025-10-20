@@ -58,9 +58,14 @@ python -c "import gradio; print(f'   ✅ Gradio {gradio.__version__}')" 2>/dev/n
 echo ""
 echo "🚀 [breathVOICE] 启动应用..."
 echo "   📱 应用将在浏览器中自动打开"
-echo "   🌐 本地访问地址: http://127.0.0.1:7866"
+echo "   🌐 本地访问地址: http://0.0.0.0:7866"
+echo "   🌐 局域网访问地址: http://[您的IP地址]:7866"
 echo "   ⏹️  按 Ctrl+C 停止服务"
 echo ""
+
+# 设置Gradio环境变量
+export GRADIO_SERVER_NAME="0.0.0.0"
+export GRADIO_SERVER_PORT=7866
 
 # 启动应用，Gradio 会因为 inbrowser=True 自动打开默认浏览器
 python app.py

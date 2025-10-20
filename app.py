@@ -2411,10 +2411,8 @@ if __name__ == "__main__":
     characters_path = os.path.join(current_dir, 'Characters')
     
     iface.launch(
-        inbrowser=True, 
         server_port=port, 
         share=False, 
-        server_name="127.0.0.1",
         allowed_paths=[characters_path],
         app_kwargs={
             "docs_url": None,

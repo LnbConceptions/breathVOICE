@@ -41,6 +41,12 @@ fi
 
 echo "[breathVOICE] Using Python: $(which python)"
 echo "[breathVOICE] Launching app..."
+echo "[breathVOICE] Local access: http://0.0.0.0:7866"
+echo "[breathVOICE] LAN access: http://[Your-IP-Address]:7866"
+
+# Set Gradio environment variables
+export GRADIO_SERVER_NAME="0.0.0.0"
+export GRADIO_SERVER_PORT=7866
 
 # Launch app; Gradio will auto-open the default browser due to inbrowser=True
 python app.py
