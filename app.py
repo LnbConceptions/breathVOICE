@@ -2162,9 +2162,39 @@ def voice_generation_ui():
         voice_generation_ui.load(get_characters_and_voice_ids, None, [character_dropdown, dialogue_set_dropdown, voice_id_dropdown])
         
         # 刷新按钮事件
+        def refresh_characters_and_dialogue_sets():
+            """刷新角色列表并自动更新台词集"""
+            try:
+                characters = db.get_characters()
+                character_choices = [(c[1], c[1]) for c in characters]  # 使用角色名称作为值
+            except Exception as e:
+                print(f"数据库连接失败，使用文件系统获取角色列表: {e}")
+                # 如果数据库连接失败，直接从文件系统获取角色列表
+                characters_dir = "/Users/Saga/Documents/L&B Conceptions/Demo/breathVOICE/Characters"
+                if os.path.exists(characters_dir):
+                    character_folders = [d for d in os.listdir(characters_dir) 
+                                       if os.path.isdir(os.path.join(characters_dir, d))]
+                    character_choices = [(name, name) for name in character_folders]
+                else:
+                    character_choices = []
+            
+            if character_choices:
+                # 自动选择第一个角色并获取其台词集
+                first_character = character_choices[0][1]
+                dialogue_set_choices = get_dialogue_sets_from_files(first_character)
+                return (
+                    gr.update(choices=character_choices, value=first_character),
+                    gr.update(choices=dialogue_set_choices)
+                )
+            else:
+                return (
+                    gr.update(choices=[]),
+                    gr.update(choices=[])
+                )
+        
         refresh_character_btn.click(
-            lambda: gr.update(choices=[(c[1], c[0]) for c in db.get_characters()]),
-            outputs=character_dropdown
+            refresh_characters_and_dialogue_sets,
+            outputs=[character_dropdown, dialogue_set_dropdown]
         )
         
         refresh_dialogue_set_btn.click(

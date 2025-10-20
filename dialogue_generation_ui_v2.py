@@ -503,14 +503,34 @@ def build_dialogue_generation_ui(db):
         def get_initial_state():
             characters = db.get_characters()
             configs = db.get_llm_configs()
+            
+            # 如果有角色，自动选择第一个并显示其图像和描述
+            char_image_val = None
+            char_desc_val = ""
+            char_value = None
+            
+            if characters:
+                char_value = characters[0][0]  # 选择第一个角色的ID
+                char = characters[0]
+                name = char[1]
+                img_path = file_manager.get_character_original_avatar_path(name)
+                desc_text = file_manager.get_character_description(name)
+                if not isinstance(desc_text, str) or not desc_text.strip():
+                    desc_text = char[2] or ""
+                desc_text = desc_text.replace("{{char}}", name).replace("{{user}}", "用户")
+                char_image_val = img_path if (isinstance(img_path, str) and os.path.exists(img_path)) else None
+                char_desc_val = desc_text
+            
             return (
-                gr.update(choices=[(c[1], c[0]) for c in characters]),
+                gr.update(choices=[(c[1], c[0]) for c in characters], value=char_value),
                 gr.update(choices=[(c[1], c[0]) for c in configs]),
                 gr.update(interactive=False),
                 gr.update(interactive=False),
+                gr.update(value=char_image_val),
+                gr.update(value=char_desc_val),
             )
 
-        dialogue_generation_interface.load(get_initial_state, None, [character_dropdown, llm_config_dropdown, start_btn, stop_btn])
+        dialogue_generation_interface.load(get_initial_state, None, [character_dropdown, llm_config_dropdown, start_btn, stop_btn, char_image, char_desc_box])
 
     return dialogue_generation_interface
 
