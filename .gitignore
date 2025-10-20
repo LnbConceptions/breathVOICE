@@ -146,3 +146,29 @@ backup_*/
 voice_packs/
 exports/
 output/
+
+# Project specific exclusions
+# Character data and voice files
+Characters/
+
+# Debug files and configurations
+debug/
+
+# API documentation and test files
+breathVOICE_API/
+
+# LLM configuration files
+*.json
+config.json
+llm_config.json
+openai_config.json
+api_config.json
+settings.json
+
+# Process ID files
+*.pid
+breathvoice.pid
+
+# Virtual environment (additional patterns)
+venv*/
+.venv*/
