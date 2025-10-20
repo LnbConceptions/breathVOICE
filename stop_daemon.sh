@@ -21,9 +21,10 @@ fi
 PID=$(cat "$PID_FILE")
 
 # 检查进程是否存在
-if ! ps -p $PID > /dev/null 2>&1; thenecho "ℹ️ [breathVOICE Daemon] 进程 $PID 不存在，清理PID文件"
-        rm -f "$PID_FILE"
-        exit 00
+if ! ps -p $PID > /dev/null 2>&1; then
+    echo "ℹ️ [breathVOICE Daemon] 进程 $PID 不存在，清理PID文件"
+    rm -f "$PID_FILE"
+    exit 0
 fi
 
 # 尝试优雅地停止进程
