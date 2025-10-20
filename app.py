@@ -2418,13 +2418,13 @@ if __name__ == "__main__":
     iface.launch(
         server_port=port, 
         share=False, 
-        allowed_paths=[characters_path, os.path.join(current_dir, 'avatars'), current_dir],
+        # allowed_paths=[characters_path, os.path.join(current_dir, 'avatars'), current_dir],
         app_kwargs={
             "docs_url": None,
             "redoc_url": None,
         },
         show_error=True,
         quiet=False,
-        root_path=os.environ.get('GRADIO_ROOT_PATH', ''),
+        root_path="/gradio_api",
         pwa=True
     )

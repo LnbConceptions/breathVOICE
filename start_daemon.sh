@@ -85,13 +85,13 @@ echo ""
 export GRADIO_SERVER_NAME="0.0.0.0"
 export GRADIO_SERVER_PORT=7866
 # 在反向代理下将root_path设为子路径，以正确生成URL
-export GRADIO_ROOT_PATH="/gradio_api"
+# export GRADIO_ROOT_PATH="/gradio_api"
 
 # 使用nohup在后台运行，并记录PID
 nohup python app.py > "$LOG_FILE" 2>&1 &
 echo $! > "$PID_FILE"
 
-echo "✅ [breathVOICE Daemon] 服务已启动 (PID: $(cat $PID_FILE))"
+echo "✅ [breathVOICE Daemon] 服务已启动 (PID: $(cat "$PID_FILE"))"
 echo "   您现在可以安全地断开SSH连接"
-echo "   查看日志: tail -f $LOG_FILE"
+echo "   查看日志: tail -f \"$LOG_FILE\""
 echo "   停止服务: ./stop_daemon.sh"

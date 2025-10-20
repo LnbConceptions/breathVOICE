@@ -13,18 +13,17 @@ echo "🛑 [breathVOICE Daemon] 正在停止后台服务..."
 
 # 检查PID文件是否存在
 if [ ! -f "$PID_FILE" ]; then
-    echo "❌ [breathVOICE Daemon] 未找到PID文件，服务可能未运行"
-    exit 1
+    echo "ℹ️ [breathVOICE Daemon] 未找到PID文件，服务可能未运行"
+    exit 0
 fi
 
 # 读取PID
 PID=$(cat "$PID_FILE")
 
 # 检查进程是否存在
-if ! ps -p $PID > /dev/null 2>&1; then
-    echo "❌ [breathVOICE Daemon] 进程 $PID 不存在，清理PID文件"
-    rm -f "$PID_FILE"
-    exit 1
+if ! ps -p $PID > /dev/null 2>&1; thenecho "ℹ️ [breathVOICE Daemon] 进程 $PID 不存在，清理PID文件"
+        rm -f "$PID_FILE"
+        exit 00
 fi
 
 # 尝试优雅地停止进程
@@ -52,5 +51,5 @@ if ! ps -p $PID > /dev/null 2>&1; then
     rm -f "$PID_FILE"
 else
     echo "❌ [breathVOICE Daemon] 无法停止进程 $PID"
-    exit 1
+    exit 0
 fi
