@@ -2367,12 +2367,17 @@ if __name__ == "__main__":
     ], ["角色管理", "LLM配置", "台词生成", "语音生成", "导出语音包"], title="breathVOICE：个性化角色语音定制系统")
 
     port = int(os.environ.get('GRADIO_SERVER_PORT', 7866))
+    
+    # 获取当前脚本所在目录，确保跨平台兼容性
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    characters_path = os.path.join(current_dir, 'Characters')
+    
     iface.launch(
         inbrowser=True, 
         server_port=port, 
         share=False, 
         server_name="127.0.0.1",
-        allowed_paths=["/Users/Saga/Documents/L&B Conceptions/Demo/breathVOICE/Characters"],
+        allowed_paths=[characters_path],
         app_kwargs={
             "docs_url": None,
             "redoc_url": None,

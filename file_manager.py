@@ -4,8 +4,13 @@ from PIL import Image
 import json
 
 class CharacterFileManager:
-    def __init__(self, base_path='/Users/Saga/Documents/L&B Conceptions/Demo/breathVOICE/Characters'):
-        self.base_path = base_path
+    def __init__(self, base_path=None):
+        if base_path is None:
+            # 使用当前脚本所在目录作为基础路径，确保跨平台兼容性
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            self.base_path = os.path.join(current_dir, 'Characters')
+        else:
+            self.base_path = base_path
         self.ensure_base_directory()
     
     def ensure_base_directory(self):
