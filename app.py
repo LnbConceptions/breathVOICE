@@ -154,8 +154,13 @@ def update_character_list():
         avatar_path = file_manager.get_character_avatar_path(name)
         
         if avatar_path and os.path.exists(avatar_path):
-            # 创建HTML img标签显示头像
-            avatar_html = f'<img src="file://{avatar_path}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;" alt="Avatar">'
+            # 通过 Gradio 的 /file= 路由提供头像（支持反向代理）
+            root_path = os.environ.get('GRADIO_ROOT_PATH', '')
+            prefix = root_path if root_path else ''
+            if prefix and not prefix.startswith('/'):
+                prefix = '/' + prefix
+            file_url = f"{prefix}/file={avatar_path}"
+            avatar_html = f'<img src="{file_url}" style="width:50px;height:50px;object-fit:cover;border-radius:4px;" alt="Avatar">'
         else:
             # 使用默认头像图标
             avatar_html = '<div style="width:50px;height:50px;background-color:#e0e0e0;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:20px;">👤</div>'
