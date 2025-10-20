@@ -2425,6 +2425,5 @@ if __name__ == "__main__":
         },
         show_error=True,
         quiet=False,
-        root_path="/gradio_api",
         pwa=True
     )
