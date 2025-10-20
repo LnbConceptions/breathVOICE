@@ -1,0 +1,8 @@
+gradio
+openai
+pandas
+soundfile
+numpy
+tqdm
+requests
+Pillow
