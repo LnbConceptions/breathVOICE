@@ -108,7 +108,19 @@ if %errorlevel% neq 0 (
     echo.
     echo 📞 如需技术支持，请访问：https://github.com/LnbConceptions/breathVOICE
     echo.
+    echo 按任意键退出...
+    pause >nul
+    exit /b %errorlevel%
+)
 
 echo.
+echo ✅ breathVOICE系统已成功启动！
+echo 📍 访问地址：http://localhost:7866
+echo.
+echo ⚠️  注意：请保持此窗口打开，关闭窗口将停止服务
+echo 💡 按Ctrl+C可以停止服务
+echo.
 echo 感谢使用breathVOICE系统！
+echo.
+:: 保持窗口打开，等待用户手动关闭
 pause
