@@ -6,9 +6,8 @@ import json
 class CharacterFileManager:
     def __init__(self, base_path=None):
         if base_path is None:
-            # 使用当前脚本所在目录作为基础路径，确保跨平台兼容性
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            self.base_path = os.path.join(current_dir, 'Characters')
+            # 默认基础路径为 'Characters'，相对于项目根目录
+            self.base_path = 'Characters'
         else:
             self.base_path = base_path
         self.ensure_base_directory()
