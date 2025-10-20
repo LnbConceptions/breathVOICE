@@ -1708,6 +1708,14 @@ def voice_generation_ui():
             """更新台词集选项"""
             dialogue_set_choices = get_dialogue_sets_from_files(character_name)
             return gr.update(choices=dialogue_set_choices)
+        
+        def get_dialogue_sets(character_name):
+            """获取角色的台词集选项（用于语音生成界面）"""
+            if character_name:
+                # 从文件系统获取台词集
+                dialogue_set_choices = get_dialogue_sets_from_files(character_name)
+                return gr.update(choices=dialogue_set_choices)
+            return gr.update(choices=[])
 
         def update_dialogue_display_with_ui(csv_file_path):
             """根据CSV文件内容更新预创建的UI组件"""
@@ -2160,7 +2168,7 @@ def voice_generation_ui():
         )
         
         refresh_dialogue_set_btn.click(
-            lambda character_id: gr.update(choices=get_dialogue_sets(character_id) if character_id else []),
+            lambda character_name: update_dialogue_sets(character_name) if character_name else gr.update(choices=[]),
             inputs=character_dropdown,
             outputs=dialogue_set_dropdown
         )
