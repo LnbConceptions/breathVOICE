@@ -148,7 +148,7 @@ def update_character_list():
     characters = db.get_characters()
     # 返回HTML格式的头像和角色名称
     result = []
-    prefix = os.getenv("GRADIO_ROOT_PATH", "")
+    prefix = ""
     for character in characters:
         character_id, name = character[0], character[1]
         # 使用文件管理器获取头像路径
@@ -2415,7 +2415,7 @@ if __name__ == "__main__":
     iface.launch(
         server_port=port, 
         share=False, 
-        allowed_paths=[characters_path, os.path.join(current_dir, 'avatars'), current_dir],
+        # allowed_paths=[characters_path, os.path.join(current_dir, 'avatars'), current_dir],
         app_kwargs={
             "docs_url": None,
             "redoc_url": None,
