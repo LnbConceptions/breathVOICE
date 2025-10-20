@@ -2420,5 +2420,6 @@ if __name__ == "__main__":
         },
         show_error=True,
         quiet=False,
-        root_path=os.environ.get('GRADIO_ROOT_PATH', '')
+        root_path=os.environ.get('GRADIO_ROOT_PATH', ''),
+        pwa=True
     )

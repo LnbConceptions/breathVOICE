@@ -22,7 +22,7 @@ wheels/
 MANIFEST
 
 # PyInstaller
-*.manifest
+# *.manifest
 *.spec
 
 # Installer logs
