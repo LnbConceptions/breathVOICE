@@ -49,7 +49,7 @@ if not exist "requirements.txt" (
 
 :: 检查关键依赖包是否已安装
 echo 正在检查关键依赖包...
-python -c "import gradio, torch, transformers" >nul 2>&1
+python -c "import gradio, torch, transformers, openai" >nul 2>&1
 if %errorlevel% neq 0 (
     echo ⚠️  检测到缺少依赖包，正在自动安装...
     echo.
