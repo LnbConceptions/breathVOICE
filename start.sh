@@ -66,6 +66,7 @@ echo ""
 # 设置Gradio环境变量
 export GRADIO_SERVER_NAME="0.0.0.0"
 export GRADIO_SERVER_PORT=7866
+export GRADIO_ROOT_PATH=""
 
 # 启动应用，Gradio 会因为 inbrowser=True 自动打开默认浏览器
 python app.py

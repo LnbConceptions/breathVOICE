@@ -2419,5 +2419,7 @@ if __name__ == "__main__":
             "redoc_url": None,
         },
         show_error=True,
-        quiet=False
+        quiet=False,
+        root_path=os.environ.get('GRADIO_ROOT_PATH', ''),
+        file_directories=[characters_path, os.path.join(current_dir, 'avatars')]
     )

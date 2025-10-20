@@ -84,6 +84,7 @@ echo ""
 # 设置Gradio环境变量
 export GRADIO_SERVER_NAME="0.0.0.0"
 export GRADIO_SERVER_PORT=7866
+export GRADIO_ROOT_PATH=""
 
 # 使用nohup在后台运行，并记录PID
 nohup python app.py > "$LOG_FILE" 2>&1 &

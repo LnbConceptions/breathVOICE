@@ -1,0 +1,73 @@
+server {
+    listen 1120 ssl;
+    server_name voice.ioioioioio.com;
+
+    # SSL配置
+    ssl_certificate /path/to/your/certificate.crt;
+    ssl_certificate_key /path/to/your/private.key;
+
+    # 增加上传文件大小限制
+    client_max_body_size 100M;
+
+    # 代理超时设置
+    proxy_connect_timeout 60s;
+    proxy_send_timeout 60s;
+    proxy_read_timeout 60s;
+
+    # 处理静态文件和API路径
+    location /gradio_api/ {
+        proxy_pass http://127.0.0.1:7866/gradio_api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+        
+        # 处理WebSocket连接
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    # 处理文件上传和下载
+    location /file= {
+        proxy_pass http://127.0.0.1:7866/file=;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+    }
+
+    # 处理manifest.json
+    location /manifest.json {
+        proxy_pass http://127.0.0.1:7866/manifest.json;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        add_header Content-Type application/json;
+    }
+
+    # 主要应用代理
+    location / {
+        proxy_pass http://127.0.0.1:7866/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+        
+        # 处理WebSocket连接
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        
+        # 缓冲设置
+        proxy_buffering off;
+        proxy_cache off;
+    }
+}
