@@ -126,8 +126,8 @@ Generate authentic, character-appropriate dialogue in {target_language} for inti
                     },
                     {
                         "parameter": "P0_orgasm_1",
-                        "situation": "Character reaching climax, any position",
-                        "expected_dialogue": "Passionate, intense climax dialogue"
+                        "situation": "Character experiencing orgasm/climax, any position",
+                        "expected_dialogue": "Passionate, intense dialogue during actual climax (not approaching climax)"
                     }
                 ]
             },
@@ -222,6 +222,7 @@ Generate authentic, character-appropriate dialogue in {target_language} for inti
                 ],
                 "orgasm": [
                     "Climax lines; passionate but coherent and brief.",
+                    "These are dialogues when character is actually experiencing orgasm/climax, not approaching it.",
                     "P0 means any position; keep authenticity and intensity.",
                 ],
             }

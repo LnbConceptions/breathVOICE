@@ -785,7 +785,7 @@ def dialogue_generation_ui():
             configs = db.get_llm_configs()
             return gr.update(choices=[(c[1], c[0]) for c in characters]), gr.update(choices=[(c[1], c[0]) for c in configs])
 
-        def get_dialogue_sets(character_id):
+        def get_dialogue_sets_for_generation(character_id):
             if character_id:
                 sets = db.get_dialogue_sets(character_id)
                 return gr.update(choices=[(s[1], s[0]) for s in sets])
@@ -1234,7 +1234,7 @@ def dialogue_generation_ui():
 
         # 事件绑定
         # language_dropdown.change(update_table_headers, language_dropdown, dialogue_df)
-        character_dropdown.change(get_dialogue_sets, character_dropdown, load_dialogue_set_dropdown)
+        character_dropdown.change(get_dialogue_sets_for_generation, character_dropdown, load_dialogue_set_dropdown)
 
         # character_dropdown.change(refresh_csv_files, character_dropdown, csv_files_dropdown)
         # refresh_csv_button.click(refresh_csv_files, character_dropdown, csv_files_dropdown)
@@ -1855,7 +1855,7 @@ def voice_generation_ui():
                             os.makedirs(temp_dir, exist_ok=True)
                             
                             # 创建临时音频文件
-                            audio_file_path = os.path.join(temp_dir, f"{filename}.wav")
+                            audio_file_path = os.path.join(temp_dir, filename)
                             with open(audio_file_path, 'wb') as f:
                                 f.write(audio_bytes)
                             
@@ -2160,7 +2160,7 @@ def voice_generation_ui():
         )
         
         refresh_dialogue_set_btn.click(
-            lambda character_id: gr.update(choices=get_dialogue_sets(character_id) if character_id else []),
+            lambda character_name: gr.update(choices=get_dialogue_sets_from_files(character_name) if character_name else []),
             inputs=character_dropdown,
             outputs=dialogue_set_dropdown
         )
@@ -2372,7 +2372,10 @@ if __name__ == "__main__":
         server_port=port, 
         share=False, 
         server_name="127.0.0.1",
-        allowed_paths=["/Users/Saga/Documents/L&B Conceptions/Demo/breathVOICE/Characters"],
+        allowed_paths=[
+            "/Users/Saga/Documents/L&B Conceptions/Demo/breathVOICE/Characters",
+            "/Users/Saga/Documents/L&B Conceptions/Demo/breathVOICE"
+        ],
         app_kwargs={
             "docs_url": None,
             "redoc_url": None,

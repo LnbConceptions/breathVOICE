@@ -499,18 +499,38 @@ def build_dialogue_generation_ui(db):
         llm_config_dropdown.change(update_button_states, [character_dropdown, llm_config_dropdown, language_dropdown], [start_btn, stop_btn])
         language_dropdown.change(update_button_states, [character_dropdown, llm_config_dropdown, language_dropdown], [start_btn, stop_btn])
 
-        # 加载时刷新下拉与按键初始状态
+        # 加载时刷新下拉与按键初始状态，并初始化角色显示
         def get_initial_state():
             characters = db.get_characters()
             configs = db.get_llm_configs()
+            
+            # 设置默认选择第一个角色
+            first_character_id = characters[0][0] if characters else None
+            
+            # 获取第一个角色的图片和描述
+            char_image_val = None
+            char_desc_val = ""
+            if first_character_id:
+                char = db.get_character(first_character_id)
+                name = char[1]
+                img_path = file_manager.get_character_original_avatar_path(name)
+                desc_text = file_manager.get_character_description(name)
+                if not isinstance(desc_text, str) or not desc_text.strip():
+                    desc_text = char[2] or ""
+                desc_text = desc_text.replace("{{char}}", name).replace("{{user}}", "用户")
+                char_image_val = img_path if (isinstance(img_path, str) and os.path.exists(img_path)) else None
+                char_desc_val = desc_text
+            
             return (
-                gr.update(choices=[(c[1], c[0]) for c in characters]),
+                gr.update(choices=[(c[1], c[0]) for c in characters], value=first_character_id),
                 gr.update(choices=[(c[1], c[0]) for c in configs]),
                 gr.update(interactive=False),
                 gr.update(interactive=False),
+                gr.update(value=char_image_val),
+                gr.update(value=char_desc_val),
             )
 
-        dialogue_generation_interface.load(get_initial_state, None, [character_dropdown, llm_config_dropdown, start_btn, stop_btn])
+        dialogue_generation_interface.load(get_initial_state, None, [character_dropdown, llm_config_dropdown, start_btn, stop_btn, char_image, char_desc_box])
 
     return dialogue_generation_interface
 

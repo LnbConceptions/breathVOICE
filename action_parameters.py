@@ -116,7 +116,7 @@ PARAM_CATEGORIES = {
 # 参数说明
 PARAM_DESCRIPTIONS = {
     "greeting": "Greeting lines — Character greets the user after system startup",
-    "orgasm": "Orgasm lines — Dialogue for climax, tailored to different positions",
+    "orgasm": "Orgasm lines — Dialogue when character is experiencing orgasm/climax (not approaching climax, but actually reaching it), tailored to different positions",
     "reaction": "Arousal reactions — Feedback when user thrusts actively for a period",
     "tease": "Tease lines — When user's motion pauses for a while, teasing dialogue",
     "impact": "Impact lines — Dialogue when insertion is detected after 20+ seconds idle",
