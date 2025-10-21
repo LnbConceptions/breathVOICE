@@ -103,6 +103,19 @@ Pillow          # 图像处理
 - **Python版本**：3.8 或更高版本
 - **内存要求**：建议 8GB 以上
 - **存储空间**：建议 10GB 以上可用空间
+- **依赖库**：详见 requirements.txt
+
+### 核心依赖
+
+项目主要依赖以下Python库：
+- **gradio** (>=5.0.0)：Web界面框架
+- **openai**：LLM API客户端
+- **pandas**：数据处理
+- **soundfile**：音频文件处理
+- **numpy**：数值计算
+- **tqdm**：进度条显示
+- **requests**：HTTP请求
+- **Pillow**：图像处理
 
 ### 安装步骤
 
@@ -282,7 +295,7 @@ http://localhost:7866
 ### 步骤五：导出语音包
 
 #### 功能概述
-将生成的语音文件整理打包，形成标准格式的语音包供下载使用。
+将生成的语音文件整理打包，形成标准格式的语音包供下载使用。系统已优化导出流程，确保高效稳定的批量处理。
 
 #### 操作步骤
 1. **确认语音文件**
@@ -296,8 +309,15 @@ http://localhost:7866
 3. **打包下载**
    - 系统自动整理文件结构
    - 创建分类文件夹
+   - 实时显示导出进度
    - 压缩为ZIP文件
    - 自动开始下载
+
+#### 技术改进
+- **优化进度显示**：统一的三参数进度回调格式 `(current, total, message)`
+- **错误处理**：完善的异常捕获和错误报告
+- **依赖优化**：移除scipy依赖，使用numpy进行音频处理
+- **兼容性增强**：支持多种音频格式和采样率
 
 #### 输出结构
 ```
@@ -312,25 +332,35 @@ http://localhost:7866
 
 ## 🔌 API集成
 
-### BreathVOICE API服务
+### 外部API支持
 
-项目提供了完整的API集成方案，详细文档请参考：
+项目支持集成多种外部API服务：
 
-- **API文档**：[BreathVOICE_API_Documentation.md](./breathVOICE_API/BreathVOICE_API_Documentation.md)
-- **集成指南**：[API_Integration_Guide.md](./breathVOICE_API/API_Integration_Guide.md)
-- **开发者资源**：[Developer_Resource_Package.md](./breathVOICE_API/Developer_Resource_Package.md)
+#### LLM API集成
+- **OpenAI官方API**：支持GPT-3.5/GPT-4等模型
+- **Azure OpenAI**：企业级OpenAI服务
+- **兼容API**：支持其他OpenAI兼容的API服务
+- **本地LLM**：支持本地部署的大语言模型
 
-### 快速测试
+#### TTS API集成
+- **GPT-SoVITS**：高质量语音合成服务
+- **自定义TTS**：支持其他TTS服务接入
+
+### API配置示例
 
 ```python
-import requests
+# LLM API配置示例
+llm_config = {
+    "api_url": "https://api.openai.com/v1",
+    "api_key": "your-api-key",
+    "model": "gpt-3.5-turbo"
+}
 
-# API服务地址
-base_url = "https://tts.ioioioioio.com:1120"
-
-# 测试连通性
-response = requests.get(f"{base_url}/")
-print(f"服务状态: {response.status_code}")
+# TTS API配置示例  
+tts_config = {
+    "api_url": "http://localhost:9880",
+    "voice_id": "your-voice-id"
+}
 ```
 
 ## 📁 项目结构
@@ -339,28 +369,37 @@ print(f"服务状态: {response.status_code}")
 breathVOICE/
 ├── README.md                    # 项目说明文档
 ├── requirements.txt             # Python依赖列表
+├── requirements_build.txt       # 构建依赖列表
+├── requirements_compatible.txt  # 兼容性依赖列表
 ├── start_breathVOICE.bat       # Windows启动脚本
 ├── Start breathVOICE.command   # macOS启动脚本
+├── start.sh                    # Linux启动脚本
+├── build_windows_exe.bat       # Windows EXE打包脚本
+├── build_exe.py                # EXE打包工具
 ├── app.py                      # 主应用程序
 ├── app_simple.py               # 简化版应用
+├── app_standalone.py           # 独立版应用
+├── app_csv_editor.py           # CSV编辑器应用
 ├── database.py                 # 数据库操作
 ├── file_manager.py             # 文件管理
 ├── dialogue_generator.py       # 台词生成器
 ├── voice_pack_exporter.py      # 语音包导出器
 ├── action_parameters.py        # 动作参数定义
-├── Characters/                 # 角色数据目录
+├── csv_parameter_loader.py     # CSV参数加载器
+├── fix_gradio_compatibility.py # Gradio兼容性修复
 ├── voice_outputs/              # 语音输出目录
+├── avatars/                    # 角色头像目录
 ├── assets/                     # 静态资源
 │   ├── character_card.css      # 角色卡片样式
 │   └── character_grid.js       # 角色网格脚本
-├── breathVOICE_API/            # API集成文档
-│   ├── README.md
-│   ├── BreathVOICE_API_Documentation.md
-│   ├── API_Integration_Guide.md
-│   └── test_breathvoice_api.py
+├── static/                     # 静态文件
 ├── docs/                       # 开发文档
-├── debug/                      # 调试文件
-└── snapshots/                  # 项目快照
+├── snapshots/                  # 项目快照
+├── 存档/                       # 历史存档
+├── Windows_EXE_打包指南.md      # Windows打包指南
+├── deployment_guide.md         # 部署指南
+├── data_structure_design.md    # 数据结构设计
+└── voice_pack.db               # 语音包数据库
 ```
 
 ## 🛠️ 开发指南
@@ -459,6 +498,22 @@ A: 优化建议：
 - 调整批量处理的并发数
 
 ## 📝 更新日志
+
+### v1.2.0 (2024-12-XX)
+- 🔧 **导出功能优化**：修复语音包导出中的进度回调参数不匹配问题
+- 📦 **依赖优化**：移除scipy依赖，使用numpy进行音频处理
+- 🎯 **进度显示改进**：统一进度回调格式为 `(current, total, message)`
+- 🖥️ **Windows支持**：新增Windows EXE打包支持和相关脚本
+- 🧪 **测试增强**：添加多个测试脚本和调试工具
+- 📊 **CSV处理**：改进CSV参数加载器和编辑功能
+- 🔄 **兼容性修复**：修复Gradio版本兼容性问题
+- 📱 **多版本支持**：新增独立应用版本和简化版本
+
+### v1.1.0 (2024-11-XX)
+- 🎨 **UI优化**：改进用户界面和交互体验
+- 🔧 **文件管理**：优化文件管理和对话生成功能
+- 📝 **文档完善**：添加部署指南和数据结构设计文档
+- 🐛 **Bug修复**：修复多个已知问题和稳定性改进
 
 ### v1.0.0 (2024-01-XX)
 - ✨ 初始版本发布
