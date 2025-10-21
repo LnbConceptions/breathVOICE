@@ -34,7 +34,7 @@ class CharacterFileManager:
         
         # 在Voices目录下创建台词类型子目录
         voice_path = os.path.join(character_path, f'{character_name}_Voices')
-        voice_subdirs = ['greeting', 'impact', 'orgasm', 'reaction', 'tease', 'touch']
+        voice_subdirs = ['greeting', 'impact', 'orgasm', 'reaction', 'tease', 'touch', 'breath', 'moan']
         for voice_subdir in voice_subdirs:
             voice_subdir_path = os.path.join(voice_path, voice_subdir)
             if not os.path.exists(voice_subdir_path):

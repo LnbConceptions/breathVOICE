@@ -13,6 +13,7 @@ from tqdm import tqdm
 from action_parameters import ALL_ACTION_PARAMS
 from dialogue_generation_ui_v2 import build_dialogue_generation_ui
 from voice_pack_exporter import VoicePackExporter
+from csv_parameter_loader import CSVParameterLoader
 
 # 应用JSON Schema补丁以避免Gradio内部错误
 import gradio_client.utils
@@ -1518,7 +1519,21 @@ def update_character_info(character_input):
         return gr.update(value=None), gr.update(value=f"加载角色信息失败: {str(e)}")
 
 def voice_generation_ui():
-    with gr.Blocks() as voice_generation_ui:
+    # 自定义CSS样式，简化音频播放器
+    css = """
+    .simple-audio-player audio {
+        height: 32px !important;
+        border-radius: 6px !important;
+    }
+    .simple-audio-player .audio-container {
+        padding: 4px !important;
+    }
+    .simple-audio-player .audio-waveform {
+        display: none !important;
+    }
+    """
+    
+    with gr.Blocks(css=css) as voice_generation_ui:
         gr.Markdown("## 第四步：语音生成")
         
         # 选择区域
@@ -1566,15 +1581,19 @@ def voice_generation_ui():
             gr.HTML("<div style='flex: 3; text-align: center; font-weight: bold;'>音频</div>")
         
         # 预创建固定数量的UI组件（类似台词生成界面）
-        MAX_ROWS = 200
+        # 动态UI组件容器
         dialogue_checkboxes = []
         action_param_textboxes = []
         dialogue_textboxes = []
         audio_outputs = []
+        dialogue_rows = []
         
-        # 创建固定数量的行
-        for i in range(MAX_ROWS):
-            with gr.Row(visible=True) as row:  # 改为默认可见
+        # 预估最大可能需要的行数（基于当前参数数量的1.5倍作为缓冲）
+        MAX_POSSIBLE_ROWS = 650  # 434 * 1.5，留有余量
+        
+        def create_dialogue_row(index):
+            """创建单个台词行的UI组件"""
+            with gr.Row(visible=False) as row:  # 默认不可见，等待数据加载后显示
                 checkbox = gr.Checkbox(
                     label="", 
                     value=True, 
@@ -1596,7 +1615,7 @@ def voice_generation_ui():
                     scale=6, 
                     show_label=False
                 )
-                # 简化的音频播放器，移动到状态栏原来的位置
+                # 极简音频播放器
                 audio = gr.Audio(
                     label="", 
                     value=None, 
@@ -1604,13 +1623,21 @@ def voice_generation_ui():
                     scale=3, 
                     show_label=False,
                     show_download_button=False,
-                    show_share_button=False
+                    show_share_button=False,
+                    waveform_options={"show_controls": False, "show_recording_waveform": False},
+                    container=False,
+                    elem_classes=["simple-audio-player"]
                 )
-                
-                dialogue_checkboxes.append(checkbox)
-                action_param_textboxes.append(action_param)
-                dialogue_textboxes.append(text)
-                audio_outputs.append(audio)
+            return row, checkbox, action_param, text, audio
+        
+        # 预创建足够数量的UI组件
+        for i in range(MAX_POSSIBLE_ROWS):
+            row, checkbox, action_param, text, audio = create_dialogue_row(i)
+            dialogue_rows.append(row)
+            dialogue_checkboxes.append(checkbox)
+            action_param_textboxes.append(action_param)
+            dialogue_textboxes.append(text)
+            audio_outputs.append(audio)
 
         def get_characters_and_voice_ids():
             """获取角色列表和语音ID列表"""
@@ -1710,12 +1737,13 @@ def voice_generation_ui():
             return gr.update(choices=dialogue_set_choices)
 
         def update_dialogue_display_with_ui(csv_file_path):
-            """根据CSV文件内容更新预创建的UI组件"""
+            """根据CSV文件内容更新预创建的UI组件，支持动态扩展"""
             if not csv_file_path or not os.path.exists(csv_file_path):
                 # 隐藏所有行
                 updates = []
-                for i in range(MAX_ROWS):
+                for i in range(len(dialogue_checkboxes)):
                     updates.extend([
+                        gr.update(visible=False),  # Row visibility
                         gr.update(value=True),     # Checkbox
                         gr.update(value=""),       # Action param
                         gr.update(value=""),       # Dialogue
@@ -1743,12 +1771,27 @@ def voice_generation_ui():
                             'selected': True
                         })
                 
+                # 检查是否需要扩展UI组件
+                needed_rows = len(dialogue_data)
+                current_rows = len(dialogue_checkboxes)
+                
+                # 如果需要更多行，动态创建
+                if needed_rows > current_rows:
+                    for i in range(current_rows, needed_rows):
+                        row, checkbox, action_param, text, audio = create_dialogue_row(i)
+                        dialogue_rows.append(row)
+                        dialogue_checkboxes.append(checkbox)
+                        action_param_textboxes.append(action_param)
+                        dialogue_textboxes.append(text)
+                        audio_outputs.append(audio)
+                
                 # 更新UI组件
                 updates = []
-                for i in range(MAX_ROWS):
+                for i in range(len(dialogue_checkboxes)):
                     if i < len(dialogue_data):
                         data = dialogue_data[i]
                         updates.extend([
+                            gr.update(visible=True),                    # Row visibility
                             gr.update(value=True),                      # Checkbox
                             gr.update(value=data['action_param']),      # Action param
                             gr.update(value=data['dialogue']),          # Dialogue
@@ -1756,6 +1799,7 @@ def voice_generation_ui():
                         ])
                     else:
                         updates.extend([
+                            gr.update(visible=False),  # Row visibility
                             gr.update(value=True),     # Checkbox
                             gr.update(value=""),       # Action param
                             gr.update(value=""),       # Dialogue
@@ -1769,8 +1813,9 @@ def voice_generation_ui():
             except Exception as e:
                 # 隐藏所有行
                 updates = []
-                for i in range(MAX_ROWS):
+                for i in range(len(dialogue_checkboxes)):
                     updates.extend([
+                        gr.update(visible=False),  # Row visibility
                         gr.update(value=True),     # Checkbox
                         gr.update(value=""),       # Action param
                         gr.update(value=""),       # Dialogue
@@ -1785,11 +1830,11 @@ def voice_generation_ui():
         def select_all_dialogues(current_data):
             """全选所有台词"""
             if current_data is None or len(current_data) == 0:
-                return [gr.update(value=True) for _ in range(MAX_ROWS)] + [gr.update(value="没有可选择的台词")]
+                return [gr.update(value=True) for _ in range(len(dialogue_checkboxes))] + [gr.update(value="没有可选择的台词")]
             
             # 返回所有复选框的更新，选中状态为True
             updates = []
-            for i in range(MAX_ROWS):
+            for i in range(len(dialogue_checkboxes)):
                 if i < len(current_data):
                     updates.append(gr.update(value=True))
                 else:
@@ -1801,11 +1846,11 @@ def voice_generation_ui():
         def select_none_dialogues(current_data):
             """取消选择所有台词"""
             if current_data is None or len(current_data) == 0:
-                return [gr.update(value=False) for _ in range(MAX_ROWS)] + [gr.update(value="没有可取消选择的台词")]
+                return [gr.update(value=False) for _ in range(len(dialogue_checkboxes))] + [gr.update(value="没有可取消选择的台词")]
             
             # 返回所有复选框的更新，选中状态为False
             updates = []
-            for i in range(MAX_ROWS):
+            for i in range(len(dialogue_checkboxes)):
                 if i < len(current_data):
                     updates.append(gr.update(value=False))
                 else:
@@ -1849,9 +1894,9 @@ def voice_generation_ui():
                             # 解码base64音频数据
                             audio_bytes = base64.b64decode(audio_data)
                             
-                            # 创建角色语音临时文件夹路径
-                            character_voices_dir = f"/Users/Saga/Documents/L&B Conceptions/Demo/breathVOICE/Characters/{character_name}/{character_name}_Voices"
-                            temp_dir = os.path.join(character_voices_dir, "temp")
+                            # 创建角色临时文件夹路径（直接在角色文件夹下）
+                            character_dir = f"/Users/Saga/Documents/L&B Conceptions/Demo/breathVOICE/Characters/{character_name}"
+                            temp_dir = os.path.join(character_dir, "temp")
                             os.makedirs(temp_dir, exist_ok=True)
                             
                             # 创建临时音频文件
@@ -1912,7 +1957,7 @@ def voice_generation_ui():
             generation_stop_flag.value = False
             
             # 准备初始的音频组件更新列表（所有音频组件保持当前状态）
-            initial_audio_updates = [gr.update() for _ in range(MAX_ROWS)]
+            initial_audio_updates = [gr.update() for _ in range(len(dialogue_checkboxes))]
             
             # 首先返回按钮状态更新
             yield (
@@ -1962,7 +2007,7 @@ def voice_generation_ui():
             for idx, item in enumerate(selected_items):
                 # 检查停止标志
                 if generation_stop_flag.value:
-                    audio_updates = [gr.update() for _ in range(MAX_ROWS)]
+                    audio_updates = [gr.update() for _ in range(len(dialogue_checkboxes))]
                     yield (
                         gr.update(visible=True),   # 显示生成按钮
                         gr.update(visible=False),  # 隐藏停止按钮
@@ -1972,7 +2017,7 @@ def voice_generation_ui():
                 
                 # 更新当前进度
                 current_progress = f"正在生成 ({idx + 1}/{total_count}): {item['action_param']} - {item['dialogue_text'][:30]}..."
-                audio_updates = [gr.update() for _ in range(MAX_ROWS)]
+                audio_updates = [gr.update() for _ in range(len(dialogue_checkboxes))]
                 yield (
                     gr.update(visible=False),  # 保持生成按钮隐藏
                     gr.update(visible=True),   # 保持停止按钮显示
@@ -1988,7 +2033,7 @@ def voice_generation_ui():
                 )
                 
                 # 准备音频组件更新列表
-                audio_updates = [gr.update() for _ in range(MAX_ROWS)]
+                audio_updates = [gr.update() for _ in range(len(dialogue_checkboxes))]
                 
                 if result["success"]:
                     success_count += 1
@@ -1998,7 +2043,7 @@ def voice_generation_ui():
                     status_msg = f"✅ 生成成功 ({idx + 1}/{total_count})"
                     
                     # 更新对应的音频组件
-                    if index < MAX_ROWS:
+                    if index < len(dialogue_checkboxes):
                         audio_updates[index] = gr.update(value=result["audio_path"])
                 else:
                     # 生成失败，记录错误信息
@@ -2019,7 +2064,7 @@ def voice_generation_ui():
             
             # 生成完成，恢复按钮状态
             final_msg = f"🎉 逐条生成完成！成功生成 {success_count}/{total_count} 个音频文件"
-            final_audio_updates = [gr.update() for _ in range(MAX_ROWS)]
+            final_audio_updates = [gr.update() for _ in range(len(dialogue_checkboxes))]
             yield (
                 gr.update(visible=True),   # 显示生成按钮
                 gr.update(visible=False),  # 隐藏停止按钮
@@ -2034,9 +2079,9 @@ def voice_generation_ui():
             if current_data is None or len(current_data) == 0:
                 return gr.update(value="没有可保存的音频文件")
             
-            # 获取temp文件夹路径
-            character_voices_dir = f"/Users/Saga/Documents/L&B Conceptions/Demo/breathVOICE/Characters/{character_name}/{character_name}_Voices"
-            temp_dir = os.path.join(character_voices_dir, "temp")
+            # 获取temp文件夹路径（直接在角色文件夹下）
+            character_dir = f"/Users/Saga/Documents/L&B Conceptions/Demo/breathVOICE/Characters/{character_name}"
+            temp_dir = os.path.join(character_dir, "temp")
             
             if not os.path.exists(temp_dir):
                 return gr.update(value="临时文件夹不存在")
@@ -2049,7 +2094,9 @@ def voice_generation_ui():
                 "tease": "tease",
                 "long": "touch",
                 "short": "touch",
-                "orgasm": "orgasm"
+                "orgasm": "orgasm",
+                "breath": "breath",
+                "moan": "moan"
             }
             
             saved_count = 0
@@ -2064,10 +2111,10 @@ def voice_generation_ui():
                     # 检查文件名中包含的关键词
                     for keyword, folder_name in keyword_mapping.items():
                         if keyword in filename.lower():
-                            # 创建目标文件夹
-                            target_folder = os.path.join(character_voices_dir, folder_name)
+                            # 创建目标文件夹（直接在角色目录下）
+                            target_folder = os.path.join(character_dir, folder_name)
                             os.makedirs(target_folder, exist_ok=True)
-                            
+                        
                             # 移动文件到目标文件夹
                             target_path = os.path.join(target_folder, filename)
                             try:
@@ -2107,22 +2154,26 @@ def voice_generation_ui():
         character_dropdown.change(update_dialogue_sets, character_dropdown, dialogue_set_dropdown)
         
         # 台词集下拉框变化时更新界面
-        # 创建所有输出列表：行可见性 + 每行的4个组件
-        all_outputs = []
-        for i in range(MAX_ROWS):
-            # 每行包含：复选框、动作参数、台词、音频
-            all_outputs.extend([
-                dialogue_checkboxes[i],
-                action_param_textboxes[i],
-                dialogue_textboxes[i],
-                audio_outputs[i]
-            ])
-        all_outputs.extend([current_dialogue_data, status_text])
+        # 创建动态输出列表：行可见性 + 每行的4个组件
+        def get_all_outputs():
+            """动态获取所有输出组件"""
+            all_outputs = []
+            for i in range(len(dialogue_checkboxes)):
+                # 每行包含：行可见性、复选框、动作参数、台词、音频
+                all_outputs.extend([
+                    dialogue_rows[i],
+                    dialogue_checkboxes[i],
+                    action_param_textboxes[i],
+                    dialogue_textboxes[i],
+                    audio_outputs[i]
+                ])
+            all_outputs.extend([current_dialogue_data, status_text])
+            return all_outputs
         
         dialogue_set_dropdown.change(
             update_dialogue_display_with_ui, 
             dialogue_set_dropdown, 
-            all_outputs
+            get_all_outputs()
         )
         
         # 全选/全不选按钮
@@ -2220,17 +2271,18 @@ def export_ui():
                     return False, "角色不存在"
                 
                 character_name = character[1]
-                source_voices_dir = file_manager.get_voice_directory(character_name)
+                # 修改为直接使用角色文件夹路径，而非_Voices子文件夹
+                character_dir = os.path.join(file_manager.base_path, character_name)
                 
-                if not os.path.exists(source_voices_dir):
-                    return False, f"语音目录不存在: {source_voices_dir}"
+                if not os.path.exists(character_dir):
+                    return False, f"角色目录不存在: {character_dir}"
                 
                 # 检查指定的子文件夹中是否有wav文件
                 target_folders = ['greeting', 'orgasm', 'reaction', 'tease', 'impact', 'touch']
                 has_wav_files = False
                 
                 for folder in target_folders:
-                    folder_path = os.path.join(source_voices_dir, folder)
+                    folder_path = os.path.join(character_dir, folder)
                     if os.path.exists(folder_path) and folder != 'temp':
                         # 检查文件夹中是否有.wav文件
                         for file in os.listdir(folder_path):
@@ -2275,13 +2327,13 @@ def export_ui():
                 
                 character_name = character[1]
                 
-                # 获取源语音目录（带_Voices后缀）
-                source_voices_dir = file_manager.get_voice_directory(character_name)
+                # 修改为直接使用角色文件夹路径，而非_Voices子文件夹
+                character_dir = os.path.join(file_manager.base_path, character_name)
                 
                 # 检查源目录是否存在
-                if not os.path.exists(source_voices_dir):
+                if not os.path.exists(character_dir):
                     return (
-                        gr.update(value=f"❌ 语音目录不存在: {source_voices_dir}", visible=True),
+                        gr.update(value=f"❌ 角色目录不存在: {character_dir}", visible=True),
                         gr.update(visible=False)
                     )
                 
@@ -2290,13 +2342,17 @@ def export_ui():
                 os.makedirs(output_dir, exist_ok=True)
                 
                 # 进度回调函数
-                def progress_callback(progress_value, message):
+                def progress_callback(current, total, message):
+                    if total > 0:
+                        progress_value = current / total
+                    else:
+                        progress_value = 0
                     progress(progress_value, desc=message)
                 
                 # 执行导出
                 result = voice_exporter.export_voice_pack(
                     character_name=character_name,
-                    source_voices_dir=source_voices_dir,
+                    source_voices_dir=character_dir,
                     output_dir=output_dir,
                     progress_callback=progress_callback
                 )
@@ -2356,6 +2412,12 @@ def export_ui():
 
 
 if __name__ == "__main__":
+    # 启动时自动同步参数
+    print("正在检查并同步参数...")
+    loader = CSVParameterLoader()
+    loader.sync_parameters()
+    print("参数同步完成！")
+    
     db.initialize_database()
 
     iface = gr.TabbedInterface([

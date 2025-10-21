@@ -126,8 +126,8 @@ Generate authentic, character-appropriate dialogue in {target_language} for inti
                     },
                     {
                         "parameter": "P0_orgasm_1",
-                        "situation": "Character experiencing orgasm/climax, any position",
-                        "expected_dialogue": "Passionate, intense dialogue during actual climax (not approaching climax)"
+                        "situation": "Female character experiencing orgasm/climax, any position",
+                        "expected_dialogue": "Passionate, intense dialogue expressing the female character's own climax sensations and pleasure"
                     }
                 ]
             },
@@ -141,12 +141,15 @@ Generate authentic, character-appropriate dialogue in {target_language} for inti
                         "reaction": "20-50 characters",
                         "tease": "20-50 characters",
                         "impact": "10-30 characters",
-                        "touch": "10-30 characters"
+                        "touch": "10-30 characters",
+                        "breath": "5-15 characters",
+                        "moan": "5-15 characters"
                     },
                     "notes": [
-                        "Apply category length when the parameter key contains the category name (e.g., 'greeting', 'orgasm', 'reaction', 'tease', 'impact', 'touch').",
+                        "Apply category length when the parameter key contains the category name (e.g., 'greeting', 'orgasm', 'reaction', 'tease', 'impact', 'touch', 'breath', 'moan').",
                         "Characters means glyphs in the target language; keep concise, single-line outputs.",
-                        "Do not pad with filler words; keep natural and focused."
+                        "Do not pad with filler words; keep natural and focused.",
+                        "For breath and moan sounds: Use onomatopoeia and breathing sounds, not full sentences."
                     ]
                 },
                 "tone": "Intimate, authentic, emotionally appropriate to the situation",
@@ -161,7 +164,11 @@ Generate authentic, character-appropriate dialogue in {target_language} for inti
                     "Focus on emotional and physical sensations with concise delivery",
                     "Never address the user by name; use ONLY the second-person pronoun (Chinese: '你', English: 'you', Japanese: 'あなた').",
                     "If any name/title for the user appears in the description or context (e.g., 'Proxy', 'player', 'master'), ignore it and use the second-person pronoun instead.",
-                    "Do not use nicknames, titles, or placeholders to address the user; even in intimate tone, only use the second-person pronoun."
+                    "Do not use nicknames, titles, or placeholders to address the user; even in intimate tone, only use the second-person pronoun.",
+                    "For breath sounds: Generate natural breathing sounds (e.g., 'haa...', 'huu...', 'ahh...') that reflect arousal level - B1/B2 calm breathing, B3/B4 heavier breathing, B5 intense panting",
+                    "For moan sounds: Generate natural moaning sounds (e.g., 'mmm...', 'ahh...', 'ngh...') during intimate activities - intensity increases with B value, B1/B2 soft moans, B3/B4 moderate moans, B5 intense moans",
+                    "Breath and moan sounds should be onomatopoeia only, no words or sentences",
+                    "Each breath/moan represents one exhale cycle - humans can only make sounds while exhaling"
                 ]
             },
             "batch_parameters": action_params,
@@ -205,11 +212,15 @@ Generate authentic, character-appropriate dialogue in {target_language} for inti
                     "Triggered during sustained stimulation.",
                     "Use P (position) and B (arousal) to modulate intensity.",
                     "Higher B → breathier, more intense responses; keep variety.",
+                    "For P5 (cowgirl position): Emphasize the character's STRONG active control, dominance, and taking charge of the rhythm and intensity. Show confidence and assertiveness.",
+                    "For P4 (doggy style) and P6 (pin-down position): Show the character being passive but deeply enjoying the experience, expressing pleasure through submission and surrender.",
                 ],
                 "tease": [
                     "Triggered when user's motion pauses for a while.",
                     "Encourage re-engagement; playful, seductive, not repetitive.",
                     "Respect character's personality and current arousal.",
+                    "For P5 (cowgirl position): Emphasize the character's STRONG active control, dominance, and taking charge of the rhythm and intensity. Show confidence and assertiveness.",
+                    "For P4 (doggy style) and P6 (pin-down position): Show the character being passive but deeply enjoying the experience, expressing pleasure through submission and surrender.",
                 ],
                 "impact": [
                     "Triggered after >20s idle when new insertion is detected.",
@@ -218,12 +229,35 @@ Generate authentic, character-appropriate dialogue in {target_language} for inti
                 "touch": [
                     "Triggered by touch sensors with part and duration.",
                     "Reflect differences across LTit/RTit/LButt/RButt and long/short.",
+                    "Note: LButt/RButt refer to left/right thigh areas, not buttocks.",
                     "Combine with position (P) and arousal (B) for nuance.",
                 ],
                 "orgasm": [
                     "Climax lines; passionate but coherent and brief.",
-                    "These are dialogues when character is actually experiencing orgasm/climax, not approaching it.",
-                    "P0 means any position; keep authenticity and intensity.",
+                    "These are dialogues when the female character herself is actually experiencing orgasm/climax, not approaching it.",
+                    "Express the character's own pleasure, sensations, and emotional state during climax.",
+                    "IMPORTANT: Focus ONLY on the female character's perspective and experience - never describe male ejaculation or 'filling' actions.",
+                    "Avoid phrases like '射进来', '子宫被你填满了' - these describe the male user's actions, not the character's experience.",
+                    "Instead focus on: the character's physical sensations, emotional responses, loss of control, waves of pleasure, etc.",
+                    "P0 means any position; keep authenticity and intensity from the character's viewpoint.",
+                ],
+                "breath": [
+                    "Triggered during intimate pauses when user is not actively touching or thrusting.",
+                    "Generate natural breathing sounds only - no words or sentences.",
+                    "B1/B2: Calm, soft breathing sounds (e.g., 'haa...', 'huu...')",
+                    "B3/B4: Heavier, more noticeable breathing (e.g., 'haah...', 'huuh...')",
+                    "B5: Intense panting sounds (e.g., 'haaah...', 'huuuh...')",
+                    "Each sound represents one exhale cycle during rest periods.",
+                    "Sounds should reflect recovery breathing between intimate activities."
+                ],
+                "moan": [
+                    "Triggered during continuous intimate activities (thrusting motions).",
+                    "Generate natural moaning sounds only - no words or sentences.",
+                    "B1/B2: Soft, gentle moans (e.g., 'mmm...', 'ahh...')",
+                    "B3/B4: Moderate intensity moans (e.g., 'mmmh...', 'ahhh...')",
+                    "B5: Intense, passionate moans (e.g., 'ngh...', 'ahhhn...')",
+                    "Each sound represents one exhale during active stimulation.",
+                    "Sounds should reflect pleasure and arousal during intimate contact."
                 ],
             }
 

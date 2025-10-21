@@ -6,13 +6,52 @@ import numpy as np
 from tqdm import tqdm
 import tempfile
 import logging
+import subprocess
 
 class VoicePackExporter:
     """语音包导出器，负责处理音频格式转换、文件整理和压缩打包"""
     
     def __init__(self):
         self.logger = logging.getLogger(__name__)
+        # wav_to_bre转换程序的路径
+        self.wav_to_bre_path = os.path.join(os.path.dirname(__file__), 'voice_packs', 'wav_to_bre_single')
         
+    def convert_wav_to_bre(self, input_wav_path, output_bre_path):
+        """
+        使用wav_to_bre程序将WAV文件转换为BRE格式
+        
+        Args:
+            input_wav_path (str): 输入WAV文件路径
+            output_bre_path (str): 输出BRE文件路径
+        
+        Returns:
+            bool: 转换是否成功
+        """
+        try:
+            # 确保输出目录存在
+            os.makedirs(os.path.dirname(output_bre_path), exist_ok=True)
+            
+            # 调用wav_to_bre程序（不使用check=True，因为程序可能返回非零退出码但仍然成功）
+            result = subprocess.run([
+                self.wav_to_bre_path,
+                input_wav_path,
+                output_bre_path
+            ], capture_output=True, text=True)
+            
+            # 检查输出文件是否存在来判断转换是否成功
+            if os.path.exists(output_bre_path) and os.path.getsize(output_bre_path) > 0:
+                self.logger.info(f"WAV转BRE成功: {input_wav_path} -> {output_bre_path}")
+                return True
+            else:
+                self.logger.error(f"WAV转BRE失败 {input_wav_path}: 输出文件不存在或为空")
+                if result.stderr:
+                    self.logger.error(f"错误信息: {result.stderr}")
+                return False
+            
+        except Exception as e:
+            self.logger.error(f"WAV转BRE异常 {input_wav_path}: {str(e)}")
+            return False
+    
     def convert_audio_format(self, input_path, output_path, target_sr=48000, target_channels=1, target_subtype='PCM_16'):
         """
         转换音频格式为48KHz, 16bit, 单声道 WAV
@@ -38,17 +77,11 @@ class VoicePackExporter:
             
             # 重采样到目标采样率
             if sr != target_sr:
-                # 使用简单的线性插值重采样
-                from scipy import signal
-                # 如果没有scipy，使用numpy的插值
-                try:
-                    data = signal.resample(data, int(len(data) * target_sr / sr))
-                except ImportError:
-                    # 使用numpy的线性插值作为备选方案
-                    old_indices = np.arange(len(data))
-                    new_length = int(len(data) * target_sr / sr)
-                    new_indices = np.linspace(0, len(data) - 1, new_length)
-                    data = np.interp(new_indices, old_indices, data)
+                # 使用numpy的线性插值重采样（避免scipy依赖）
+                old_indices = np.arange(len(data))
+                new_length = int(len(data) * target_sr / sr)
+                new_indices = np.linspace(0, len(data) - 1, new_length)
+                data = np.interp(new_indices, old_indices, data)
             
             # 确保数据类型正确
             data = data.astype(np.float32)
@@ -65,10 +98,10 @@ class VoicePackExporter:
     
     def copy_and_organize_voice_files(self, source_voices_dir, temp_export_dir, character_name, progress_callback=None):
         """
-        复制并整理语音文件，排除temp文件夹，转换音频格式
+        复制并整理语音文件，排除temp文件夹，转换音频格式并生成BRE文件
         
         Args:
-            source_voices_dir (str): 源语音文件夹路径（如：精灵公主_Voices）
+            source_voices_dir (str): 源语音文件夹路径（角色文件夹路径）
             temp_export_dir (str): 临时导出目录
             character_name (str): 角色名称
             progress_callback (callable): 进度回调函数
@@ -84,7 +117,7 @@ class VoicePackExporter:
         os.makedirs(target_dir, exist_ok=True)
         
         # 定义需要处理的子文件夹（排除temp）
-        target_folders = ["greeting", "orgasm", "reaction", "tease", "impact", "touch"]
+        target_folders = ["greeting", "orgasm", "reaction", "tease", "impact", "touch", "breath", "moan"]
         
         success_count = 0
         total_count = 0
@@ -116,12 +149,22 @@ class VoicePackExporter:
             
             for wav_file in wav_files:
                 source_file = os.path.join(source_folder, wav_file)
-                target_file = os.path.join(target_folder, wav_file)
+                
+                # 创建临时WAV文件（48KHz格式）
+                temp_wav_file = os.path.join(target_folder, wav_file)
+                # 创建BRE文件
+                bre_file = os.path.join(target_folder, wav_file.replace('.wav', '.bre'))
                 
                 try:
-                    # 转换音频格式
-                    if self.convert_audio_format(source_file, target_file):
-                        success_count += 1
+                    # 先转换音频格式到临时WAV文件
+                    if self.convert_audio_format(source_file, temp_wav_file):
+                        # 再将WAV转换为BRE格式
+                        if self.convert_wav_to_bre(temp_wav_file, bre_file):
+                            # 删除临时WAV文件，只保留BRE文件
+                            os.remove(temp_wav_file)
+                            success_count += 1
+                        else:
+                            errors.append(f"WAV转BRE失败: {wav_file}")
                     else:
                         errors.append(f"音频转换失败: {wav_file}")
                         
@@ -132,8 +175,7 @@ class VoicePackExporter:
                 
                 # 更新进度
                 if progress_callback:
-                    progress = processed_count / total_count if total_count > 0 else 0
-                    progress_callback(progress, f"处理文件: {wav_file}")
+                    progress_callback(processed_count, total_count, f"处理文件: {wav_file}")
         
         return success_count, total_count, errors
     
@@ -176,7 +218,7 @@ class VoicePackExporter:
                         # 更新进度
                         if progress_callback:
                             progress = processed_files / total_files if total_files > 0 else 0
-                            progress_callback(progress, f"压缩文件: {file}")
+                            progress_callback(processed_files, total_files, f"压缩文件: {file}")
             
             self.logger.info(f"ZIP文件创建成功: {output_zip_path}")
             return True
@@ -214,16 +256,16 @@ class VoicePackExporter:
             # 创建临时目录
             with tempfile.TemporaryDirectory() as temp_dir:
                 if progress_callback:
-                    progress_callback(0.1, "开始处理语音文件...")
+                    progress_callback(0, 1, "开始处理语音文件...")
                 
                 # 复制并整理文件
                 success_count, total_count, errors = self.copy_and_organize_voice_files(
                     source_voices_dir, temp_dir, character_name,
-                    lambda p, m: progress_callback(0.1 + p * 0.7, m) if progress_callback else None
+                    lambda current, total, message: progress_callback(int(0.1 * 100 + (current / total) * 70), 100, message) if progress_callback and total > 0 else None
                 )
                 
                 if progress_callback:
-                    progress_callback(0.8, "开始压缩打包...")
+                    progress_callback(80, 100, "开始压缩打包...")
                 
                 # 创建ZIP文件
                 zip_filename = f"{character_name}.zip"
@@ -231,11 +273,11 @@ class VoicePackExporter:
                 
                 zip_success = self.create_voice_pack_zip(
                     temp_dir, zip_path, character_name,
-                    lambda p, m: progress_callback(0.8 + p * 0.2, m) if progress_callback else None
+                    lambda current, total, message: progress_callback(int(80 + (current / total) * 20), 100, message) if progress_callback and total > 0 else None
                 )
                 
                 if progress_callback:
-                    progress_callback(1.0, "导出完成！")
+                    progress_callback(100, 100, "导出完成！")
                 
                 if zip_success:
                     return {

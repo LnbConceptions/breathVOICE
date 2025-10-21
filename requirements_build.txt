@@ -1,0 +1,29 @@
+# breathVOICE 打包专用依赖
+# 基础运行时依赖
+gradio>=5.0.0
+openai
+pandas
+soundfile
+numpy
+tqdm
+requests
+Pillow
+
+# 打包工具
+pyinstaller>=5.0
+auto-py-to-exe
+
+# Web服务器依赖
+uvicorn
+fastapi
+starlette
+pydantic
+websockets
+httpx
+anyio
+sniffio
+h11
+typing-extensions
+
+# 可选的优化工具
+upx-ucl  # UPX压缩工具（需要单独安装）
