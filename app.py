@@ -1390,13 +1390,19 @@ def generate_dialogue_streaming(character_id, llm_config_id, language, df_data):
         target_language = language_map.get(language, "Chinese")
         pronoun = pronoun_map.get(language, "你")
 
+        # 构建中文特殊约束
+        chinese_constraint = ""
+        if language == "中文":
+            chinese_constraint = "- CHINESE CONTENT RESTRICTION: Do not use the character '肏'. Use alternative expressions to maintain appropriate language standards.\n"
+
         strict_system_prompt = (
             f"{system_prompt}\n\n"
             f"IMPORTANT: STRICT LANGUAGE RULES:\n"
             f"- Write all output exclusively in {target_language}.\n"
             f"- Do not mix other languages and do not include any translation.\n"
             f"- Always address the user ONLY with '{pronoun}'. Never use names or nicknames.\n"
-            f"- For Japanese, use kana and kanji only; romaji strictly prohibited."
+            f"- For Japanese, use kana and kanji only; romaji strictly prohibited.\n"
+            f"{chinese_constraint}"
         )
 
         base_user_prompt = user_prompt_template.format(dialogue=action_param)
@@ -2086,7 +2092,7 @@ def voice_generation_ui():
             if not os.path.exists(temp_dir):
                 return gr.update(value="临时文件夹不存在")
             
-            # 定义关键词到文件夹的映射
+            # 定义关键词到文件夹的映射（移除breath和moan）
             keyword_mapping = {
                 "greeting": "greeting",
                 "impact": "impact", 
@@ -2094,9 +2100,7 @@ def voice_generation_ui():
                 "tease": "tease",
                 "long": "touch",
                 "short": "touch",
-                "orgasm": "orgasm",
-                "breath": "breath",
-                "moan": "moan"
+                "orgasm": "orgasm"
             }
             
             saved_count = 0
@@ -2233,6 +2237,17 @@ def export_ui():
         
         with gr.Row():
             character_dropdown = gr.Dropdown(label="选择角色", scale=2)
+            
+        # 添加breath和moan素材包选择
+        with gr.Row():
+            material_pack_radio = gr.Radio(
+                label="breath和moan素材包选择",
+                choices=[],
+                value=None,
+                scale=2
+            )
+            
+        with gr.Row():
             export_button = gr.Button("🎯 导出语音包", variant="primary", scale=1, interactive=False)
         
         # 进度显示区域
@@ -2240,7 +2255,7 @@ def export_ui():
             progress_bar = gr.Progress()
             status_text = gr.Textbox(
                 label="导出状态", 
-                value="请选择角色", 
+                value="请选择角色和素材包", 
                 interactive=False,
                 lines=3
             )
@@ -2259,6 +2274,23 @@ def export_ui():
             """获取角色列表"""
             characters = db.get_characters()
             return gr.update(choices=[(c[1], c[0]) for c in characters])
+
+        def get_material_packs():
+            """获取素材包列表"""
+            reference_voices_dir = "/Users/Saga/Documents/L&B Conceptions/Demo/breathVOICE/Reference Voices"
+            material_packs = []
+            
+            if os.path.exists(reference_voices_dir):
+                for item in os.listdir(reference_voices_dir):
+                    item_path = os.path.join(reference_voices_dir, item)
+                    if os.path.isdir(item_path):
+                        # 检查是否包含breath和moan子文件夹
+                        breath_path = os.path.join(item_path, "breath")
+                        moan_path = os.path.join(item_path, "moan")
+                        if os.path.exists(breath_path) and os.path.exists(moan_path):
+                            material_packs.append(item)
+            
+            return gr.update(choices=material_packs)
 
         def check_voice_files_exist(character_id):
             """检查角色是否有可导出的语音文件"""
@@ -2300,19 +2332,40 @@ def export_ui():
             except Exception as e:
                 return False, f"检查语音文件时出错: {str(e)}"
 
-        def update_export_button_state(character_id):
+        def update_export_button_state(character_id, material_pack):
             """更新导出按钮状态"""
-            has_files, message = check_voice_files_exist(character_id)
+            has_character_files, character_message = check_voice_files_exist(character_id)
+            has_material_pack = material_pack is not None and material_pack != ""
+            
+            if not character_id:
+                message = "请选择角色"
+                can_export = False
+            elif not has_character_files:
+                message = character_message
+                can_export = False
+            elif not has_material_pack:
+                message = "请选择breath和moan素材包"
+                can_export = False
+            else:
+                message = "已选择角色和素材包，可以导出语音包"
+                can_export = True
+            
             return (
-                gr.update(interactive=has_files),
+                gr.update(interactive=can_export),
                 gr.update(value=message)
             )
 
-        def export_voice_pack_with_progress(character_id, progress=gr.Progress()):
+        def export_voice_pack_with_progress(character_id, material_pack, progress=gr.Progress()):
             """带进度显示的语音包导出功能"""
             if not character_id:
                 return (
                     gr.update(value="❌ 请先选择一个角色", visible=True),
+                    gr.update(visible=False)
+                )
+            
+            if not material_pack:
+                return (
+                    gr.update(value="❌ 请先选择一个素材包", visible=True),
                     gr.update(visible=False)
                 )
 
@@ -2349,12 +2402,13 @@ def export_ui():
                         progress_value = 0
                     progress(progress_value, desc=message)
                 
-                # 执行导出
+                # 执行导出，传入素材包选择
                 result = voice_exporter.export_voice_pack(
                     character_name=character_name,
                     source_voices_dir=character_dir,
                     output_dir=output_dir,
-                    progress_callback=progress_callback
+                    progress_callback=progress_callback,
+                    material_pack=material_pack
                 )
                 
                 if result['success']:
@@ -2393,17 +2447,25 @@ def export_ui():
 
         # 绑定事件
         export_interface.load(get_characters, None, character_dropdown)
+        export_interface.load(get_material_packs, None, material_pack_radio)
         
         # 角色选择变化时更新按钮状态
         character_dropdown.change(
             update_export_button_state,
-            inputs=[character_dropdown],
+            inputs=[character_dropdown, material_pack_radio],
+            outputs=[export_button, status_text]
+        )
+        
+        # 素材包选择变化时更新按钮状态
+        material_pack_radio.change(
+            update_export_button_state,
+            inputs=[character_dropdown, material_pack_radio],
             outputs=[export_button, status_text]
         )
         
         export_button.click(
             export_voice_pack_with_progress,
-            inputs=[character_dropdown],
+            inputs=[character_dropdown, material_pack_radio],
             outputs=[status_text, download_file],
             show_progress=True
         )

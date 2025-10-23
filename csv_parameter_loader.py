@@ -69,6 +69,11 @@ class CSVParameterLoader:
         }
         
         for param in params:
+            # 跳过breath和moan参数，不再处理这些类型
+            if re.search(r'_breath_\d+$', param) or re.search(r'_moan_\d+$', param):
+                print(f"跳过breath/moan参数: '{param}'")
+                continue
+                
             if re.match(r'^greeting_\d+$', param):
                 categories["greeting"].append(param)
             elif re.search(r'_orgasm_\d+$', param):

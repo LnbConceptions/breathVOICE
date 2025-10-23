@@ -96,7 +96,7 @@ class VoicePackExporter:
             self.logger.error(f"音频转换失败 {input_path}: {str(e)}")
             return False
     
-    def copy_and_organize_voice_files(self, source_voices_dir, temp_export_dir, character_name, progress_callback=None):
+    def copy_and_organize_voice_files(self, source_voices_dir, temp_export_dir, character_name, progress_callback=None, material_pack=None):
         """
         复制并整理语音文件，排除temp文件夹，转换音频格式并生成BRE文件
         
@@ -105,6 +105,7 @@ class VoicePackExporter:
             temp_export_dir (str): 临时导出目录
             character_name (str): 角色名称
             progress_callback (callable): 进度回调函数
+            material_pack (str): 素材包名称，用于获取breath和moan文件
         
         Returns:
             tuple: (成功数量, 总数量, 错误列表)
@@ -116,24 +117,34 @@ class VoicePackExporter:
         target_dir = os.path.join(temp_export_dir, character_name)
         os.makedirs(target_dir, exist_ok=True)
         
-        # 定义需要处理的子文件夹（排除temp）
-        target_folders = ["greeting", "orgasm", "reaction", "tease", "impact", "touch", "breath", "moan"]
+        # 定义需要处理的子文件夹
+        character_folders = ["greeting", "orgasm", "reaction", "tease", "impact", "touch"]  # 从角色文件夹获取
+        material_folders = ["breath", "moan"]  # 从素材包获取
         
         success_count = 0
         total_count = 0
         errors = []
         
-        # 统计总文件数
-        for folder_name in target_folders:
+        # 统计角色文件夹中的文件数
+        for folder_name in character_folders:
             folder_path = os.path.join(source_voices_dir, folder_name)
             if os.path.exists(folder_path):
                 wav_files = [f for f in os.listdir(folder_path) if f.endswith('.wav')]
                 total_count += len(wav_files)
         
+        # 统计素材包中的文件数
+        if material_pack:
+            material_pack_dir = os.path.join(os.path.dirname(__file__), "Reference Voices", material_pack)
+            for folder_name in material_folders:
+                folder_path = os.path.join(material_pack_dir, folder_name)
+                if os.path.exists(folder_path):
+                    wav_files = [f for f in os.listdir(folder_path) if f.endswith('.wav')]
+                    total_count += len(wav_files)
+        
         processed_count = 0
         
-        # 处理每个子文件夹
-        for folder_name in target_folders:
+        # 处理角色文件夹中的文件
+        for folder_name in character_folders:
             source_folder = os.path.join(source_voices_dir, folder_name)
             target_folder = os.path.join(target_dir, folder_name)
             
@@ -175,7 +186,55 @@ class VoicePackExporter:
                 
                 # 更新进度
                 if progress_callback:
-                    progress_callback(processed_count, total_count, f"处理文件: {wav_file}")
+                    progress_callback(processed_count, total_count, f"处理角色文件: {wav_file}")
+        
+        # 处理素材包中的breath和moan文件
+        if material_pack:
+            material_pack_dir = os.path.join(os.path.dirname(__file__), "Reference Voices", material_pack)
+            
+            for folder_name in material_folders:
+                source_folder = os.path.join(material_pack_dir, folder_name)
+                target_folder = os.path.join(target_dir, folder_name)
+                
+                if not os.path.exists(source_folder):
+                    self.logger.warning(f"素材包文件夹不存在，跳过: {source_folder}")
+                    continue
+                
+                # 创建目标文件夹
+                os.makedirs(target_folder, exist_ok=True)
+                
+                # 获取所有wav文件
+                wav_files = [f for f in os.listdir(source_folder) if f.endswith('.wav')]
+                
+                for wav_file in wav_files:
+                    source_file = os.path.join(source_folder, wav_file)
+                    
+                    # 创建临时WAV文件（48KHz格式）
+                    temp_wav_file = os.path.join(target_folder, wav_file)
+                    # 创建BRE文件
+                    bre_file = os.path.join(target_folder, wav_file.replace('.wav', '.bre'))
+                    
+                    try:
+                        # 先转换音频格式到临时WAV文件
+                        if self.convert_audio_format(source_file, temp_wav_file):
+                            # 再将WAV转换为BRE格式
+                            if self.convert_wav_to_bre(temp_wav_file, bre_file):
+                                # 删除临时WAV文件，只保留BRE文件
+                                os.remove(temp_wav_file)
+                                success_count += 1
+                            else:
+                                errors.append(f"WAV转BRE失败: {wav_file}")
+                        else:
+                            errors.append(f"音频转换失败: {wav_file}")
+                            
+                    except Exception as e:
+                        errors.append(f"处理素材包文件失败 {wav_file}: {str(e)}")
+                    
+                    processed_count += 1
+                    
+                    # 更新进度
+                    if progress_callback:
+                        progress_callback(processed_count, total_count, f"处理素材包文件: {wav_file}")
         
         return success_count, total_count, errors
     
@@ -227,7 +286,7 @@ class VoicePackExporter:
             self.logger.error(f"创建ZIP文件失败: {str(e)}")
             return False
     
-    def export_voice_pack(self, character_name, source_voices_dir, output_dir, progress_callback=None):
+    def export_voice_pack(self, character_name, source_voices_dir, output_dir, progress_callback=None, material_pack=None):
         """
         导出完整的语音包
         
@@ -236,6 +295,7 @@ class VoicePackExporter:
             source_voices_dir (str): 源语音文件夹路径
             output_dir (str): 输出目录
             progress_callback (callable): 进度回调函数，接收(progress, message)参数
+            material_pack (str): 素材包名称，用于获取breath和moan文件
         
         Returns:
             dict: 导出结果 {
@@ -258,10 +318,11 @@ class VoicePackExporter:
                 if progress_callback:
                     progress_callback(0, 1, "开始处理语音文件...")
                 
-                # 复制并整理文件
+                # 复制并整理文件，传入素材包参数
                 success_count, total_count, errors = self.copy_and_organize_voice_files(
                     source_voices_dir, temp_dir, character_name,
-                    lambda current, total, message: progress_callback(int(0.1 * 100 + (current / total) * 70), 100, message) if progress_callback and total > 0 else None
+                    lambda current, total, message: progress_callback(int(0.1 * 100 + (current / total) * 70), 100, message) if progress_callback and total > 0 else None,
+                    material_pack=material_pack
                 )
                 
                 if progress_callback:

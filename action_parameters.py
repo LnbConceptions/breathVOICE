@@ -1,6 +1,6 @@
 # 所有动作参数列表 - 从台词模版.csv自动生成
 # 总共434个参数，分为6个类别
-# 自动生成时间: 2025-10-22 03:08:08
+# 自动生成时间: 2025-10-23 22:08:42
 
 import csv
 import os
@@ -26,7 +26,7 @@ ORGASM_PARAMS = [
     "P0_orgasm_3", "P0_orgasm_4", "P0_orgasm_5"
 ]
 
-# 兴奋台词 (147个)
+# 兴奋台词 (92个)
 REACTION_PARAMS = [
     "P0_B0_reaction_1", "P0_B0_reaction_2", "P0_B0_reaction_3", "P0_B0_reaction_4",
     "P0_B0_reaction_5", "P0_B0_reaction_6", "P0_B0_reaction_7", "P0_B0_reaction_8",
@@ -50,21 +50,7 @@ REACTION_PARAMS = [
     "P3_B5_reaction_3", "P3_B5_reaction_4", "P4_B5_reaction_1", "P4_B5_reaction_2",
     "P4_B5_reaction_3", "P4_B5_reaction_4", "P4_B5_reaction_5", "P5_B5_reaction_1",
     "P5_B5_reaction_2", "P5_B5_reaction_3", "P5_B5_reaction_4", "P5_B5_reaction_5",
-    "P6_B5_reaction_1", "P6_B5_reaction_2", "P6_B5_reaction_3", "P6_B5_reaction_4",
-    "P0_B1_breath_1", "P0_B1_breath_2", "P0_B1_breath_3", "P0_B1_breath_4",
-    "P0_B1_breath_5", "P0_B2_breath_1", "P0_B2_breath_2", "P0_B2_breath_3",
-    "P0_B2_breath_4", "P0_B2_breath_5", "P0_B3_breath_1", "P0_B3_breath_2",
-    "P0_B3_breath_3", "P0_B3_breath_4", "P0_B3_breath_5", "P0_B4_breath_1",
-    "P0_B4_breath_2", "P0_B4_breath_3", "P0_B4_breath_4", "P0_B4_breath_5",
-    "P0_B5_breath_1", "P0_B5_breath_2", "P0_B5_breath_3", "P0_B5_breath_4",
-    "P0_B5_breath_5", "P0_B1_B2_moan_1", "P0_B1_B2_moan_2", "P0_B1_B2_moan_3",
-    "P0_B1_B2_moan_4", "P0_B1_B2_moan_5", "P0_B1_B2_moan_6", "P0_B1_B2_moan_7",
-    "P0_B1_B2_moan_8", "P0_B1_B2_moan_9", "P0_B1_B2_moan_10", "P0_B3_B4_moan_1",
-    "P0_B3_B4_moan_2", "P0_B3_B4_moan_3", "P0_B3_B4_moan_4", "P0_B3_B4_moan_5",
-    "P0_B3_B4_moan_6", "P0_B3_B4_moan_7", "P0_B3_B4_moan_8", "P0_B3_B4_moan_9",
-    "P0_B3_B4_moan_10", "P0_B5_moan_1", "P0_B5_moan_2", "P0_B5_moan_3",
-    "P0_B5_moan_4", "P0_B5_moan_5", "P0_B5_moan_6", "P0_B5_moan_7",
-    "P0_B5_moan_8", "P0_B5_moan_9", "P0_B5_moan_10"
+    "P6_B5_reaction_1", "P6_B5_reaction_2", "P6_B5_reaction_3", "P6_B5_reaction_4"
 ]
 
 # 挑逗台词 (91个)
