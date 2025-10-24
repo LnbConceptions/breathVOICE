@@ -15,6 +15,41 @@ class VoicePackExporter:
         self.logger = logging.getLogger(__name__)
         # wav_to_bre转换程序的路径
         self.wav_to_bre_path = os.path.join(os.path.dirname(__file__), 'voice_packs', 'wav_to_bre_single')
+    
+    def normalize_audio_to_dbfs(self, audio_data, target_dbfs=-10.0):
+        """
+        将音频数据标准化到指定的dBFS电平
+        
+        Args:
+            audio_data (numpy.ndarray): 输入音频数据
+            target_dbfs (float): 目标dBFS电平，默认-10.0
+        
+        Returns:
+            numpy.ndarray: 标准化后的音频数据
+        """
+        # 计算当前音频的RMS值
+        rms = np.sqrt(np.mean(audio_data ** 2))
+        
+        # 避免除零错误
+        if rms == 0:
+            return audio_data
+        
+        # 计算当前dBFS
+        current_dbfs = 20 * np.log10(rms)
+        
+        # 计算需要的增益
+        gain_db = target_dbfs - current_dbfs
+        gain_linear = 10 ** (gain_db / 20)
+        
+        # 应用增益
+        normalized_audio = audio_data * gain_linear
+        
+        # 防止削波，确保峰值不超过1.0
+        peak = np.max(np.abs(normalized_audio))
+        if peak > 1.0:
+            normalized_audio = normalized_audio / peak
+        
+        return normalized_audio
         
     def convert_wav_to_bre(self, input_wav_path, output_bre_path):
         """
@@ -54,7 +89,7 @@ class VoicePackExporter:
     
     def convert_audio_format(self, input_path, output_path, target_sr=48000, target_channels=1, target_subtype='PCM_16'):
         """
-        转换音频格式为48KHz, 16bit, 单声道 WAV
+        转换音频格式为48KHz, 16bit, 单声道 WAV，并调整音频电平到-10dbfs
         
         Args:
             input_path (str): 输入音频文件路径
@@ -83,6 +118,9 @@ class VoicePackExporter:
                 new_indices = np.linspace(0, len(data) - 1, new_length)
                 data = np.interp(new_indices, old_indices, data)
             
+            # 调整音频电平到-10dbfs
+            data = self.normalize_audio_to_dbfs(data, target_dbfs=-10.0)
+            
             # 确保数据类型正确
             data = data.astype(np.float32)
             
@@ -96,7 +134,7 @@ class VoicePackExporter:
             self.logger.error(f"音频转换失败 {input_path}: {str(e)}")
             return False
     
-    def copy_and_organize_voice_files(self, source_voices_dir, temp_export_dir, character_name, progress_callback=None, material_pack=None):
+    def copy_and_organize_voice_files(self, source_voices_dir, temp_export_dir, character_name, progress_callback=None, material_pack=None, stop_flag=None):
         """
         复制并整理语音文件，排除temp文件夹，转换音频格式并生成BRE文件
         
@@ -159,6 +197,10 @@ class VoicePackExporter:
             wav_files = [f for f in os.listdir(source_folder) if f.endswith('.wav')]
             
             for wav_file in wav_files:
+                # 检查停止标志
+                if stop_flag and stop_flag.is_set():
+                    break
+                    
                 source_file = os.path.join(source_folder, wav_file)
                 
                 # 创建临时WAV文件（48KHz格式）
@@ -286,7 +328,181 @@ class VoicePackExporter:
             self.logger.error(f"创建ZIP文件失败: {str(e)}")
             return False
     
-    def export_voice_pack(self, character_name, source_voices_dir, output_dir, progress_callback=None, material_pack=None):
+    def copy_voice_pack_to_directory(self, source_voices_dir, target_directory, character_name, progress_callback=None, material_pack=None, stop_flag=None):
+        """
+        直接拷贝语音包文件夹到指定目录（不压缩zip），包含BRE转换和音频电平调整
+        
+        Args:
+            source_voices_dir (str): 源语音文件夹路径（角色文件夹路径）
+            target_directory (str): 目标目录路径
+            character_name (str): 角色名称
+            progress_callback (callable): 进度回调函数
+            material_pack (str): 素材包名称，用于获取breath和moan文件
+        
+        Returns:
+            dict: 包含成功状态、消息和详细信息的字典
+        """
+        try:
+            if not os.path.exists(source_voices_dir):
+                return {
+                    "success": False,
+                    "message": f"源语音目录不存在: {source_voices_dir}",
+                    "details": {}
+                }
+            
+            if not os.path.exists(target_directory):
+                return {
+                    "success": False,
+                    "message": f"目标目录不存在: {target_directory}",
+                    "details": {}
+                }
+            
+            # 创建临时目录进行处理
+            with tempfile.TemporaryDirectory() as temp_dir:
+                # 检查停止标志
+                if stop_flag and stop_flag.is_set():
+                    return {"success": False, "message": "操作被用户取消", "details": {}}
+                
+                # 第一步：复制并整理语音文件，转换格式并调整电平
+                if progress_callback:
+                    progress_callback(0, "开始复制和转换音频文件...")
+                
+                success_count, total_count, errors = self.copy_and_organize_voice_files(
+                    source_voices_dir, temp_dir, character_name, 
+                    lambda current, total, msg: progress_callback(current / total * 70, msg) if progress_callback and total > 0 else None,
+                    material_pack, stop_flag
+                )
+                
+                # 检查停止标志
+                if stop_flag and stop_flag.is_set():
+                    return {"success": False, "message": "操作被用户取消", "details": {}}
+                
+                if success_count == 0:
+                    return {
+                        "success": False,
+                        "message": "没有成功处理任何音频文件",
+                        "details": {"errors": errors}
+                    }
+                
+                # 第二步：转换WAV到BRE格式
+                if progress_callback:
+                    progress_callback(70, "开始转换BRE格式...")
+                
+                # 检查停止标志
+                if stop_flag and stop_flag.is_set():
+                    return {"success": False, "message": "操作被用户取消", "details": {}}
+                
+                temp_character_dir = os.path.join(temp_dir, character_name)
+                bre_success_count, bre_total_count, bre_errors = self.convert_all_wav_to_bre(
+                    temp_character_dir,
+                    lambda progress, msg: progress_callback(70 + progress * 0.2, msg) if progress_callback else None,
+                    stop_flag
+                )
+                
+                # 检查停止标志
+                if stop_flag and stop_flag.is_set():
+                    return {"success": False, "message": "操作被用户取消", "details": {}}
+                
+                # 第三步：拷贝到目标目录
+                if progress_callback:
+                    progress_callback(90, "开始拷贝到目标位置...")
+                
+                final_target_dir = os.path.join(target_directory, character_name)
+                
+                # 如果目标目录已存在，先删除
+                if os.path.exists(final_target_dir):
+                    shutil.rmtree(final_target_dir)
+                
+                # 拷贝整个角色文件夹到目标位置
+                shutil.copytree(temp_character_dir, final_target_dir)
+                
+                if progress_callback:
+                    progress_callback(100, "拷贝完成！")
+                
+                return {
+                    "success": True,
+                    "message": f"语音包已成功拷贝到: {final_target_dir}",
+                    "details": {
+                        "character_name": character_name,
+                        "target_path": final_target_dir,
+                        "audio_files": {
+                            "processed": success_count,
+                            "total": total_count,
+                            "errors": errors
+                        },
+                        "bre_files": {
+                            "converted": bre_success_count,
+                            "total": bre_total_count,
+                            "errors": bre_errors
+                        }
+                    }
+                }
+                
+        except Exception as e:
+            error_msg = f"拷贝语音包时发生错误: {str(e)}"
+            self.logger.error(error_msg)
+            return {
+                "success": False,
+                "message": error_msg,
+                "details": {"exception": str(e)}
+            }
+    
+    def convert_all_wav_to_bre(self, character_dir, progress_callback=None, stop_flag=None):
+        """
+        转换角色目录下所有WAV文件为BRE格式
+        
+        Args:
+            character_dir (str): 角色目录路径
+            progress_callback (callable): 进度回调函数
+        
+        Returns:
+            tuple: (成功数量, 总数量, 错误列表)
+        """
+        success_count = 0
+        total_count = 0
+        errors = []
+        
+        # 统计所有WAV文件
+        wav_files = []
+        for root, dirs, files in os.walk(character_dir):
+            for file in files:
+                if file.endswith('.wav'):
+                    wav_files.append(os.path.join(root, file))
+        
+        total_count = len(wav_files)
+        
+        if total_count == 0:
+            return success_count, total_count, errors
+        
+        # 转换每个WAV文件
+        for i, wav_file in enumerate(wav_files):
+            # 检查停止标志
+            if stop_flag and stop_flag.is_set():
+                break
+                
+            try:
+                # 生成BRE文件路径
+                bre_file = wav_file.replace('.wav', '.bre')
+                
+                # 转换WAV到BRE
+                if self.convert_wav_to_bre(wav_file, bre_file):
+                    success_count += 1
+                    # 删除原WAV文件（只保留BRE文件）
+                    os.remove(wav_file)
+                else:
+                    errors.append(f"BRE转换失败: {wav_file}")
+                
+                # 更新进度
+                if progress_callback:
+                    progress = (i + 1) / total_count * 100
+                    progress_callback(progress, f"转换BRE文件 {i + 1}/{total_count}")
+                    
+            except Exception as e:
+                error_msg = f"处理文件 {wav_file} 时出错: {str(e)}"
+                errors.append(error_msg)
+                self.logger.error(error_msg)
+        
+        return success_count, total_count, errors
         """
         导出完整的语音包
         

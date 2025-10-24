@@ -10,21 +10,38 @@ cd "$SCRIPT_DIR"
 
 echo "[breathVOICE] Preparing to start service..."
 
-# Function to find available port
-find_available_port() {
-  local start_port=${1:-7866}
-  local port=$start_port
-  while [ $port -le $((start_port + 20)) ]; do
-    if ! lsof -ti tcp:$port >/dev/null 2>&1; then
-      echo $port
+# Target port (fixed to 7866)
+TARGET_PORT=7866
+
+# Function to ensure port 7866 is available
+ensure_port_available() {
+  local port=$1
+  local max_attempts=3
+  local attempt=1
+  
+  while [ $attempt -le $max_attempts ]; do
+    echo "[breathVOICE] Attempt $attempt: Checking port $port..."
+    
+    # Check if port is in use
+    pid=$(lsof -ti tcp:$port 2>/dev/null || true)
+    if [[ -n "$pid" ]]; then
+      echo "[breathVOICE] Port $port is occupied by process $pid, terminating..."
+      kill -9 $pid 2>/dev/null || true
+      sleep 2
+    else
+      echo "[breathVOICE] Port $port is available"
       return 0
     fi
-    port=$((port + 1))
+    
+    attempt=$((attempt + 1))
   done
-  echo "0"  # No available port found
+  
+  echo "[breathVOICE] Error: Unable to free port $port after $max_attempts attempts"
+  exit 1
 }
 
-# Free common Gradio ports to avoid conflicts (including 7866)
+# Free common Gradio ports to avoid conflicts
+echo "[breathVOICE] Cleaning up common Gradio ports..."
 for p in 7860 7861 7862 7863 7864 7865 7866 7867 7868 7869; do
   pid=$(lsof -ti tcp:$p 2>/dev/null || true)
   if [[ -n "$pid" ]]; then
@@ -34,12 +51,9 @@ for p in 7860 7861 7862 7863 7864 7865 7866 7867 7868 7869; do
   fi
 done
 
-# Find available port
-AVAILABLE_PORT=$(find_available_port 7866)
-if [ "$AVAILABLE_PORT" = "0" ]; then
-  echo "[breathVOICE] Error: No available port found in range 7866-7886"
-  exit 1
-fi
+# Ensure target port 7866 is available
+ensure_port_available $TARGET_PORT
+AVAILABLE_PORT=$TARGET_PORT
 
 echo "[breathVOICE] Using port: $AVAILABLE_PORT"
 

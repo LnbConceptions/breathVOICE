@@ -2255,6 +2255,40 @@ def export_ui():
             interactive=False
         )
         
+        # 新增：选择位置和注入breathKIT功能区域
+        gr.Markdown("### 高级功能：直接注入到设备")
+        
+        with gr.Row():
+            # 手动输入目标路径
+            target_path_input = gr.Textbox(
+                label="📁 目标文件夹路径",
+                value="/Volumes/NO NAME/LB",
+                placeholder="请输入完整的文件夹路径，例如：/Users/username/Desktop/breathKIT",
+                scale=2,
+                interactive=True
+            )
+            inject_breathkit_button = gr.Button("🚀 注入breathKIT", variant="primary", scale=1, interactive=False)
+        
+        # 注入状态和进度显示区域
+        with gr.Column():
+            # 注入状态显示
+            inject_status_text = gr.Textbox(
+                label="注入状态", 
+                value="", 
+                interactive=False,
+                lines=4,
+                placeholder="注入过程状态和路径验证结果将在这里显示"
+            )
+            
+            # 当前处理文件显示
+            current_file_text = gr.Textbox(
+                label="当前处理文件",
+                value="",
+                interactive=False,
+                lines=1,
+                visible=False
+            )
+        
         # 初始化语音包导出器
         voice_exporter = VoicePackExporter()
 
@@ -2342,6 +2376,207 @@ def export_ui():
                 gr.update(interactive=can_export),
                 gr.update(value=message)
             )
+
+        def update_inject_button_state(character_id, material_pack, target_path):
+            """更新注入breathKIT按钮状态"""
+            has_character_files, _ = check_voice_files_exist(character_id)
+            has_material_pack = material_pack is not None and material_pack != ""
+            
+            # 验证路径
+            status_msg, is_valid_path = validate_target_path(target_path)
+            
+            # 根据不同情况显示相应的状态信息
+            if not character_id:
+                status_msg = "❌ 请选择角色"
+                can_inject = False
+            elif not has_character_files:
+                status_msg = "❌ 角色尚无可注入的语音文件"
+                can_inject = False
+            elif not has_material_pack:
+                status_msg = "❌ 请选择breath和moan素材包"
+                can_inject = False
+            elif not target_path or target_path.strip() == "":
+                status_msg = "❌ 请输入目标文件夹路径"
+                can_inject = False
+            elif not is_valid_path:
+                # status_msg已经在validate_target_path中设置
+                can_inject = False
+            else:
+                status_msg = "✅ 目标文件夹路径可用，可以开始注入"
+                can_inject = True
+            
+            # 如果正在注入，显示注入状态
+            if inject_in_progress.is_set():
+                status_msg = "🔄 正在向breathKIT注入文件..."
+                can_inject = True  # 允许点击停止按钮
+            
+            return gr.update(interactive=can_inject), gr.update(value=status_msg)
+
+        def validate_target_path(path):
+            """验证目标路径是否有效"""
+            if not path or path.strip() == "":
+                return "❌ 请输入目标文件夹路径", False
+            
+            path = path.strip()
+            
+            # 检查路径是否存在
+            if not os.path.exists(path):
+                return "❌ 目标文件夹路径不存在", False
+            
+            # 检查是否为目录
+            if not os.path.isdir(path):
+                return "❌ 路径不是文件夹", False
+            
+            # 检查是否有写入权限
+            if not os.access(path, os.W_OK):
+                return "❌ 目标文件夹没有写入权限", False
+            
+            return "✅ 目标文件夹路径可用", True
+
+        def handle_directory_upload(files):
+            """处理目录上传，获取目录路径"""
+            if files and len(files) > 0:
+                # 获取第一个文件的目录路径
+                first_file_path = files[0].name
+                directory_path = os.path.dirname(first_file_path)
+                return gr.update(value=directory_path)
+            else:
+                return gr.update(value="")
+
+        # 全局变量用于控制注入进程
+        inject_stop_flag = threading.Event()
+        inject_in_progress = threading.Event()
+        
+        def inject_to_breathkit(character_id, material_pack, target_path, progress=gr.Progress()):
+            """注入语音包到breathKIT设备"""
+            if not character_id or not material_pack or not target_path:
+                inject_in_progress.clear()
+                return (
+                    gr.update(value="❌ 请确保已选择角色、素材包和目标路径"),
+                    gr.update(value="🚀 注入breathKIT", variant="primary", interactive=True),
+                    gr.update(visible=False)
+                )
+            
+            try:
+                # 验证目标路径
+                status_msg, is_valid_path = validate_target_path(target_path)
+                if not is_valid_path:
+                    inject_in_progress.clear()
+                    return (
+                        gr.update(value=f"❌ {status_msg}"),
+                        gr.update(value="🚀 注入breathKIT", variant="primary", interactive=True),
+                        gr.update(visible=False)
+                    )
+                
+                # 获取角色信息
+                character = db.get_character(character_id)
+                if not character:
+                    inject_in_progress.clear()
+                    return (
+                        gr.update(value="❌ 角色不存在"),
+                        gr.update(value="🚀 注入breathKIT", variant="primary", interactive=True),
+                        gr.update(visible=False)
+                    )
+                
+                character_name = character[1]
+                character_dir = os.path.join(file_manager.base_path, character_name)
+                
+                # 检查源目录是否存在
+                if not os.path.exists(character_dir):
+                    inject_in_progress.clear()
+                    return (
+                        gr.update(value=f"❌ 角色目录不存在: {character_dir}"),
+                        gr.update(value="🚀 注入breathKIT", variant="primary", interactive=True),
+                        gr.update(visible=False)
+                    )
+                
+                # 进度回调函数，支持进度条和文件名显示
+                def progress_callback(current, message):
+                    if inject_stop_flag.is_set():
+                        raise Exception("用户取消了注入操作")
+                    progress(current / 100, desc=message)
+                    
+                    # 如果消息包含文件名信息，提取并显示
+                    if ":" in message and ("正在处理" in message or "正在转换" in message or "正在拷贝" in message):
+                        file_info = message.split(":", 1)[1].strip()
+                        return file_info
+                    return ""
+                
+                # 执行直接拷贝到目标目录
+                result = voice_exporter.copy_voice_pack_to_directory(
+                    source_voices_dir=character_dir,
+                    target_directory=target_path,
+                    character_name=character_name,
+                    progress_callback=progress_callback,
+                    material_pack=material_pack,
+                    stop_flag=inject_stop_flag
+                )
+                
+                inject_in_progress.clear()
+                
+                if inject_stop_flag.is_set():
+                    return (
+                        gr.update(value="⏹️ 注入已被用户取消"),
+                        gr.update(value="🚀 注入breathKIT", variant="primary", interactive=True),
+                        gr.update(visible=False)
+                    )
+                
+                if result['success']:
+                    details = result['details']
+                    success_msg = (
+                        f"✅ 语音包注入成功！\n"
+                        f"📁 目标位置: {details['target_path']}\n"
+                        f"📊 音频文件: {details['audio_files']['processed']}/{details['audio_files']['total']} 处理成功\n"
+                        f"🔄 BRE文件: {details['bre_files']['converted']}/{details['bre_files']['total']} 转换成功"
+                    )
+                    
+                    if details['audio_files']['errors'] or details['bre_files']['errors']:
+                        error_count = len(details['audio_files']['errors']) + len(details['bre_files']['errors'])
+                        success_msg += f"\n⚠️ 警告: {error_count} 个文件处理失败"
+                    
+                    return (
+                        gr.update(value=success_msg),
+                        gr.update(value="🚀 注入breathKIT", variant="primary", interactive=True),
+                        gr.update(visible=False)
+                    )
+                else:
+                    error_msg = f"❌ 注入失败: {result['message']}"
+                    return (
+                        gr.update(value=error_msg),
+                        gr.update(value="🚀 注入breathKIT", variant="primary", interactive=True),
+                        gr.update(visible=False)
+                    )
+                    
+            except Exception as e:
+                inject_in_progress.clear()
+                if "用户取消" in str(e):
+                    return (
+                        gr.update(value="⏹️ 注入已被用户取消"),
+                        gr.update(value="🚀 注入breathKIT", variant="primary", interactive=True),
+                        gr.update(visible=False)
+                    )
+                else:
+                    error_msg = f"❌ 注入过程中发生错误: {str(e)}"
+                    return (
+                        gr.update(value=error_msg),
+                        gr.update(value="🚀 注入breathKIT", variant="primary", interactive=True),
+                        gr.update(visible=False)
+                    )
+
+        def stop_inject_process():
+            """停止注入进程"""
+            inject_stop_flag.set()
+            return (
+                gr.update(value="⏹️ 正在停止注入进程..."),
+                gr.update(value="🚀 注入breathKIT", interactive=False)
+            )
+
+        def get_inject_button_state():
+            """获取注入按钮当前状态"""
+            if inject_in_progress.is_set():
+                return gr.update(value="⏹️ 停止注入进程", variant="stop")
+            else:
+                return gr.update(value="🚀 注入breathKIT", variant="primary")
 
         def export_voice_pack_with_progress(character_id, material_pack, progress=gr.Progress()):
             """带进度显示的语音包导出功能"""
@@ -2451,10 +2686,83 @@ def export_ui():
             outputs=[export_button, status_text]
         )
         
+        # 目标路径变化时更新注入按钮状态
+        target_path_input.change(
+            update_inject_button_state,
+            inputs=[character_dropdown, material_pack_radio, target_path_input],
+            outputs=[inject_breathkit_button, inject_status_text]
+        )
+        
+        # 角色或素材包变化时也要更新注入按钮状态
+        character_dropdown.change(
+            update_inject_button_state,
+            inputs=[character_dropdown, material_pack_radio, target_path_input],
+            outputs=[inject_breathkit_button, inject_status_text]
+        )
+        
+        material_pack_radio.change(
+            update_inject_button_state,
+            inputs=[character_dropdown, material_pack_radio, target_path_input],
+            outputs=[inject_breathkit_button, inject_status_text]
+        )
+        
+        # 绑定按钮点击事件
         export_button.click(
             export_voice_pack_with_progress,
             inputs=[character_dropdown, material_pack_radio],
             outputs=[status_text, download_file],
+            show_progress=True
+        )
+        
+        target_path_input.change(
+            update_inject_button_state,
+            inputs=[character_dropdown, material_pack_radio, target_path_input],
+            outputs=[inject_breathkit_button, inject_status_text]
+        )
+        
+        # 动态按钮点击处理
+        def handle_inject_button_click(character_id, material_pack, target_path):
+            """处理注入按钮点击事件"""
+            if inject_in_progress.is_set():
+                # 如果正在注入，则停止注入
+                inject_stop_flag.set()
+                inject_in_progress.clear()
+                return (
+                    gr.update(value="⏹️ 注入已停止"),
+                    gr.update(value="🚀 注入breathKIT", variant="primary", interactive=True),
+                    gr.update(visible=False)  # 隐藏当前文件显示
+                )
+            else:
+                # 如果未在注入，则开始注入
+                inject_in_progress.set()
+                inject_stop_flag.clear()
+                # 立即更新按钮状态为停止状态
+                return (
+                    gr.update(value="🔄 正在准备注入..."),
+                    gr.update(value="⏹️ 停止注入进程", variant="stop", interactive=True),
+                    gr.update(visible=False)  # 暂时隐藏当前文件显示
+                )
+
+        def start_inject_process(character_id, material_pack, target_path, progress=gr.Progress()):
+            """启动注入进程的实际执行函数"""
+            try:
+                return inject_to_breathkit(character_id, material_pack, target_path, progress)
+            except Exception as e:
+                inject_in_progress.clear()
+                return (
+                    gr.update(value=f"❌ 注入失败: {str(e)}"),
+                    gr.update(value="🚀 注入breathKIT", variant="primary", interactive=True),
+                    gr.update(visible=False)
+                )
+
+        inject_breathkit_button.click(
+            handle_inject_button_click,
+            inputs=[character_dropdown, material_pack_radio, target_path_input],
+            outputs=[inject_status_text, inject_breathkit_button, current_file_text]
+        ).then(
+            start_inject_process,
+            inputs=[character_dropdown, material_pack_radio, target_path_input],
+            outputs=[inject_status_text, inject_breathkit_button, current_file_text],
             show_progress=True
         )
 
