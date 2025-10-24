@@ -4,6 +4,9 @@ import json
 import os
 import time
 import threading
+import logging
+import sys
+from datetime import datetime
 from database import CharacterDatabase
 from file_manager import CharacterFileManager
 import numpy as np
@@ -14,6 +17,44 @@ from action_parameters import ALL_ACTION_PARAMS
 from dialogue_generation_ui_v2 import build_dialogue_generation_ui
 from voice_pack_exporter import VoicePackExporter
 from csv_parameter_loader import CSVParameterLoader
+
+# 设置日志配置
+def setup_logging():
+    """设置详细的日志记录"""
+    # 确定日志文件路径
+    if getattr(sys, 'frozen', False):
+        # PyInstaller打包后的环境
+        app_support_dir = os.path.expanduser("~/Library/Application Support/breathVOICE")
+        os.makedirs(app_support_dir, exist_ok=True)
+        log_file = os.path.join(app_support_dir, "breathVOICE.log")
+    else:
+        # 开发环境
+        log_file = "breathVOICE.log"
+    
+    # 配置日志格式
+    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    
+    # 配置日志记录器
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format=log_format,
+        handlers=[
+            logging.FileHandler(log_file, encoding='utf-8'),
+            logging.StreamHandler(sys.stdout)
+        ]
+    )
+    
+    logger = logging.getLogger('breathVOICE')
+    logger.info(f"=== breathVOICE 启动日志 - {datetime.now()} ===")
+    logger.info(f"日志文件位置: {log_file}")
+    logger.info(f"Python版本: {sys.version}")
+    logger.info(f"工作目录: {os.getcwd()}")
+    logger.info(f"是否为打包环境: {getattr(sys, 'frozen', False)}")
+    
+    return logger
+
+# 初始化日志
+logger = setup_logging()
 
 # 应用JSON Schema补丁以避免Gradio内部错误
 import gradio_client.utils
@@ -2770,36 +2811,108 @@ def export_ui():
 
 
 if __name__ == "__main__":
-    # 启动时自动同步参数
-    print("正在检查并同步参数...")
-    loader = CSVParameterLoader()
-    loader.sync_parameters()
-    print("参数同步完成！")
+    logger.info("=== 开始启动 breathVOICE 应用程序 ===")
     
-    db.initialize_database()
+    # 启动时自动同步参数
+    try:
+        logger.info("正在检查并同步参数...")
+        print("正在检查并同步参数...")
+        loader = CSVParameterLoader()
+        loader.sync_parameters()
+        logger.info("参数同步完成！")
+        print("参数同步完成！")
+    except Exception as e:
+        logger.error(f"参数同步失败: {e}", exc_info=True)
+        print(f"参数同步失败: {e}")
+        print("参数同步完成！")
+    
+    try:
+        logger.info("正在初始化数据库...")
+        db.initialize_database()
+        logger.info("数据库初始化完成")
+    except Exception as e:
+        logger.error(f"数据库初始化失败: {e}", exc_info=True)
+        raise
 
-    iface = gr.TabbedInterface([
-        character_ui(),
-        llm_config_ui(),
-        build_dialogue_generation_ui(db),
-        voice_generation_ui(),
-        export_ui()
-    ], ["角色管理", "LLM配置", "台词生成", "语音生成", "导出语音包"], title="breathVOICE：个性化角色语音定制系统")
+    try:
+        logger.info("正在创建Gradio界面...")
+        iface = gr.TabbedInterface([
+            character_ui(),
+            llm_config_ui(),
+            build_dialogue_generation_ui(db),
+            voice_generation_ui(),
+            export_ui()
+        ], ["角色管理", "LLM配置", "台词生成", "语音生成", "导出语音包"], title="breathVOICE：个性化角色语音定制系统")
+        logger.info("Gradio界面创建完成")
+    except Exception as e:
+        logger.error(f"Gradio界面创建失败: {e}", exc_info=True)
+        raise
 
     port = int(os.environ.get('GRADIO_SERVER_PORT', 7866))
-    iface.launch(
-        inbrowser=True, 
-        server_port=port, 
-        share=False, 
-        server_name="127.0.0.1",
-        allowed_paths=[
+    logger.info(f"准备在端口 {port} 启动服务器")
+    
+    # 动态设置允许访问的路径
+    allowed_paths = []
+    if getattr(sys, 'frozen', False):
+        # 打包环境：使用用户文档目录
+        user_docs = os.path.expanduser("~/Documents")
+        allowed_paths = [
+            os.path.join(user_docs, "breathVOICE"),
+            user_docs
+        ]
+    else:
+        # 开发环境：使用项目目录
+        allowed_paths = [
             "/Users/Saga/Documents/L&B Conceptions/Demo/breathVOICE/Characters",
             "/Users/Saga/Documents/L&B Conceptions/Demo/breathVOICE"
-        ],
-        app_kwargs={
-            "docs_url": None,
-            "redoc_url": None,
-        },
-        show_error=True,
-        quiet=False
-    )
+        ]
+    
+    # 添加启动前的延迟，确保系统准备就绪
+    import time
+    logger.info("等待2秒以确保系统准备就绪...")
+    time.sleep(2)
+    
+    try:
+        logger.info(f"尝试在端口 {port} 启动Gradio服务器...")
+        iface.launch(
+            inbrowser=False, 
+            server_port=port, 
+            share=False, 
+            server_name="127.0.0.1",
+            allowed_paths=allowed_paths,
+            app_kwargs={
+                "docs_url": None,
+                "redoc_url": None,
+            },
+            show_error=True,
+            quiet=False,
+            prevent_thread_lock=False
+        )
+        logger.info(f"Gradio服务器成功启动在 http://127.0.0.1:{port}")
+    except Exception as e:
+        logger.error(f"Gradio启动失败: {e}", exc_info=True)
+        print(f"Gradio启动失败: {e}")
+        # 尝试使用不同的配置重新启动
+        try:
+            backup_port = port + 1
+            logger.info(f"尝试在备用端口 {backup_port} 启动...")
+            iface.launch(
+                inbrowser=False, 
+                server_port=backup_port, 
+                share=False, 
+                server_name="127.0.0.1",
+                allowed_paths=allowed_paths,
+                app_kwargs={
+                    "docs_url": None,
+                    "redoc_url": None,
+                },
+                show_error=True,
+                quiet=False,
+                prevent_thread_lock=False
+            )
+            logger.info(f"Gradio服务器成功启动在备用端口 http://127.0.0.1:{backup_port}")
+        except Exception as e2:
+            logger.error(f"备用启动也失败: {e2}", exc_info=True)
+            print(f"备用启动也失败: {e2}")
+            print("请手动检查网络连接和端口占用情况")
+            raise

@@ -93,5 +93,38 @@ export GRADIO_SERVER_NAME="127.0.0.1"
 export GRADIO_SERVER_PORT=$AVAILABLE_PORT
 export GRADIO_ROOT_PATH=""
 
-# Launch app; Gradio will auto-open the default browser due to inbrowser=True
-python app.py
+# Launch app in background and open browser
+echo "[breathVOICE] Starting application..."
+python app.py &
+APP_PID=$!
+
+# Wait for the server to start
+echo "[breathVOICE] Waiting for server to start..."
+sleep 8
+
+# Check if the process is still running
+if ! kill -0 $APP_PID 2>/dev/null; then
+    echo "[breathVOICE] Error: Application failed to start"
+    exit 1
+fi
+
+# Open browser
+echo "[breathVOICE] Opening browser..."
+open "http://127.0.0.1:$AVAILABLE_PORT"
+
+# Keep the script running and monitor the app
+echo "[breathVOICE] Application is running. Press Ctrl+C to stop."
+echo "[breathVOICE] PID: $APP_PID"
+
+# Function to handle cleanup on exit
+cleanup() {
+    echo "[breathVOICE] Stopping application..."
+    kill $APP_PID 2>/dev/null
+    exit 0
+}
+
+# Set trap to handle Ctrl+C
+trap cleanup INT TERM
+
+# Wait for the background process
+wait $APP_PID

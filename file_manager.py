@@ -2,12 +2,19 @@ import os
 import shutil
 from PIL import Image
 import json
+import sys
 
 class CharacterFileManager:
     def __init__(self, base_path=None):
         if base_path is None:
-            # 默认基础路径为 'Characters'，相对于项目根目录
-            self.base_path = 'Characters'
+            # 检测是否为打包环境
+            if getattr(sys, 'frozen', False):
+                # 打包环境：使用用户文档目录
+                user_docs = os.path.expanduser("~/Documents")
+                self.base_path = os.path.join(user_docs, "breathVOICE", "Characters")
+            else:
+                # 开发环境：使用项目根目录
+                self.base_path = 'Characters'
         else:
             self.base_path = base_path
         self.ensure_base_directory()

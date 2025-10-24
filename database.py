@@ -1,9 +1,18 @@
 import sqlite3
 import json
+import os
+import sys
 
 class CharacterDatabase:
     def __init__(self, db_name='voice_pack_workflow.db'):
-        self.db_name = db_name
+        # 确保数据库文件在可写目录中
+        if hasattr(sys, '_MEIPASS'):
+            # PyInstaller打包后的临时目录
+            db_dir = os.path.expanduser('~/Library/Application Support/breathVOICE')
+            os.makedirs(db_dir, exist_ok=True)
+            self.db_name = os.path.join(db_dir, db_name)
+        else:
+            self.db_name = db_name
         self.initialize_database()
 
     def get_connection(self):

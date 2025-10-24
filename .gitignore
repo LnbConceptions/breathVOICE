@@ -151,6 +151,14 @@ output/
 # Character data and voice files
 Characters/
 
+# Database files (user data)
+*.db
+voice_pack.db
+voice_pack_workflow.db
+
+# Backup directories
+backup_*/
+
 # Debug files and configurations
 debug/
 
