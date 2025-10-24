@@ -6,3 +6,5 @@ numpy
 tqdm
 requests
 Pillow
+pyinstaller>=6.0.0
+sqlite3

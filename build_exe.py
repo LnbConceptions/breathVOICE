@@ -19,6 +19,7 @@ block_cipher = None
 # 需要包含的数据文件
 datas = [
     ('assets', 'assets'),
+    ('icon', 'icon'),
     ('Characters', 'Characters'),
     ('voice_outputs', 'voice_outputs'),
     ('*.csv', '.'),
@@ -80,13 +81,78 @@ a = Analysis(
     excludes=[
         'tkinter',
         'matplotlib',
-        'scipy',
         'IPython',
         'jupyter',
         'notebook',
-        'pytest',
+        'PyQt5',
+        'PyQt6',
+        'PySide2',
+        'PySide6',
+        'test',
+        'tests',
+        'unittest',
+        'doctest',
+        'pdb',
+        'pydoc',
+        'email',
+        'xml',
+        'xmlrpc',
+        'urllib3',
+        'http.server',
+        'wsgiref',
+        'multiprocessing',
+        'concurrent.futures',
+        'asyncio',
+        'ssl',
+        'socket',
+        'socketserver',
+        'ftplib',
+        'poplib',
+        'imaplib',
+        'nntplib',
+        'smtplib',
+        'telnetlib',
+        'uuid',
+        'secrets',
+        'hmac',
+        'hashlib',
+        'crypt',
+        'getpass',
+        'curses',
+        'readline',
+        'rlcompleter',
+        'cmd',
+        'shlex',
+        'subprocess',
+        'threading',
+        'queue',
+        '_thread',
+        'dummy_threading',
+        'sched',
+        'profile',
+        'pstats',
+        'cProfile',
+        'trace',
+        'tracemalloc',
+        'faulthandler',
+        'pyclbr',
+        'py_compile',
+        'compileall',
+        'dis',
+        'pickletools',
+        'turtle',
+        'turtledemo',
+        'webbrowser',
+        'cgitb',
+        'pydoc_data',
+        'ensurepip',
+        'venv',
+        'lib2to3',
+        'idlelib',
         'setuptools',
-        'distutils',
+        'pkg_resources',
+        'wheel',
+        'pip',
     ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
@@ -112,7 +178,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='assets/icon.ico' if os.path.exists('assets/icon.ico') else None,
+    icon='icon/breathVOICE.ico' if os.path.exists('icon/breathVOICE.ico') else None,
 )
 
 coll = COLLECT(
@@ -188,27 +254,44 @@ def build_exe():
 
 def create_launcher_script():
     """创建启动脚本"""
-    launcher_content = '''@echo off
-echo 正在启动 breathVOICE...
-echo.
-echo 请稍等，系统正在初始化...
-echo 启动完成后将自动打开浏览器
-echo.
-echo 如需停止程序，请关闭此窗口
-echo ========================================
-echo.
-
-cd /d "%~dp0"
-breathVOICE.exe
-
-pause
-'''
+    dist_dir = os.path.join(os.getcwd(), 'dist', 'breathVOICE')
     
-    launcher_path = 'dist/breathVOICE/启动 breathVOICE.bat'
-    if os.path.exists('dist/breathVOICE'):
+    # 简化的中文启动脚本
+    launcher_content = '''@echo off
+title breathVOICE
+echo Starting breathVOICE...
+echo Please wait...
+echo.
+echo Browser will open at: http://127.0.0.1:7866
+echo.
+cd /d "%~dp0"
+start http://127.0.0.1:7866
+breathVOICE.exe
+pause'''
+    
+    launcher_path = os.path.join(dist_dir, '启动 breathVOICE.bat')
+    if os.path.exists(dist_dir):
         with open(launcher_path, 'w', encoding='gbk') as f:
             f.write(launcher_content)
-        print(f"✅ 已创建启动脚本: {launcher_path}")
+        print(f"✓ 中文启动脚本已创建: {launcher_path}")
+        
+        # 简化的英文启动脚本
+        launcher_content_en = '''@echo off
+title breathVOICE
+echo Starting breathVOICE...
+echo Please wait...
+echo.
+echo Browser will open at: http://127.0.0.1:7866
+echo.
+cd /d "%~dp0"
+start http://127.0.0.1:7866
+breathVOICE.exe
+pause'''
+        
+        launcher_path_en = os.path.join(dist_dir, 'Start breathVOICE.bat')
+        with open(launcher_path_en, 'w', encoding='gbk') as f:
+            f.write(launcher_content_en)
+        print(f"✓ 英文启动脚本已创建: {launcher_path_en}")
 
 def create_readme():
     """创建使用说明"""

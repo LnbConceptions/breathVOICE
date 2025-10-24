@@ -2842,7 +2842,8 @@ if __name__ == "__main__":
             build_dialogue_generation_ui(db),
             voice_generation_ui(),
             export_ui()
-        ], ["角色管理", "LLM配置", "台词生成", "语音生成", "导出语音包"], title="breathVOICE：个性化角色语音定制系统")
+        ], ["角色管理", "LLM配置", "台词生成", "语音生成", "导出语音包"], 
+        title="breathVOICE")
         logger.info("Gradio界面创建完成")
     except Exception as e:
         logger.error(f"Gradio界面创建失败: {e}", exc_info=True)
@@ -2875,7 +2876,7 @@ if __name__ == "__main__":
     try:
         logger.info(f"尝试在端口 {port} 启动Gradio服务器...")
         iface.launch(
-            inbrowser=False, 
+            inbrowser=True,  # 修改为True，自动打开浏览器
             server_port=port, 
             share=False, 
             server_name="127.0.0.1",
@@ -2886,7 +2887,8 @@ if __name__ == "__main__":
             },
             show_error=True,
             quiet=False,
-            prevent_thread_lock=False
+            prevent_thread_lock=False,
+            favicon_path="/Users/Saga/Documents/L&B Conceptions/Demo/breathVOICE/icon/breathVOICE_rounded.png"
         )
         logger.info(f"Gradio服务器成功启动在 http://127.0.0.1:{port}")
     except Exception as e:
@@ -2897,7 +2899,7 @@ if __name__ == "__main__":
             backup_port = port + 1
             logger.info(f"尝试在备用端口 {backup_port} 启动...")
             iface.launch(
-                inbrowser=False, 
+                inbrowser=True,  # 修改为True，自动打开浏览器
                 server_port=backup_port, 
                 share=False, 
                 server_name="127.0.0.1",
@@ -2908,7 +2910,8 @@ if __name__ == "__main__":
                 },
                 show_error=True,
                 quiet=False,
-                prevent_thread_lock=False
+                prevent_thread_lock=False,
+                favicon_path="/Users/Saga/Documents/L&B Conceptions/Demo/breathVOICE/icon/breathVOICE_rounded.png"
             )
             logger.info(f"Gradio服务器成功启动在备用端口 http://127.0.0.1:{backup_port}")
         except Exception as e2:
