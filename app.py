@@ -1567,8 +1567,6 @@ def voice_generation_ui():
         
         # 操作按钮区域
         with gr.Row():
-            select_all_btn = gr.Button("全选", size="sm")
-            select_none_btn = gr.Button("全不选", size="sm")
             generate_selected_btn = gr.Button("🎯 生成选中的语音", variant="primary")
             stop_generation_btn = gr.Button("⏹️ 停止生成", variant="stop", visible=False)
             save_package_btn = gr.Button("💾 保存音频文件包", variant="secondary")
@@ -1580,11 +1578,16 @@ def voice_generation_ui():
         current_dialogue_data = gr.State([])
         
         # 表头
-        with gr.Row():
-            gr.HTML("<div style='width: 32px; text-align: center; font-weight: bold;'>选择</div>")
-            gr.HTML("<div style='flex: 3; text-align: center; font-weight: bold;'>动作参数</div>")
-            gr.HTML("<div style='flex: 6; text-align: center; font-weight: bold;'>台词</div>")
-            gr.HTML("<div style='flex: 3; text-align: center; font-weight: bold;'>音频</div>")
+        with gr.Row(variant="compact", elem_classes="compact-row"):
+            header_checkbox = gr.Checkbox(label="", value=True, scale=0, min_width=40, show_label=False)  # 全选复选框
+            with gr.Column(scale=0, min_width=80):
+                gr.HTML("<div style='text-align: center; font-weight: bold; padding: 2px; line-height: 1.0; margin: 1px 0;'>序号</div>")
+            with gr.Column(scale=3):
+                gr.HTML("<div style='text-align: center; font-weight: bold; padding: 2px; line-height: 1.0; margin: 1px 0;'>动作参数</div>")
+            with gr.Column(scale=6):
+                gr.HTML("<div style='text-align: center; font-weight: bold; padding: 2px; line-height: 1.0; margin: 1px 0;'>台词</div>")
+            with gr.Column(scale=3):
+                gr.HTML("<div style='text-align: center; font-weight: bold; padding: 2px; line-height: 1.0; margin: 1px 0;'>音频</div>")
         
         # 预创建固定数量的UI组件（类似台词生成界面）
         # 动态UI组件容器
@@ -1599,27 +1602,33 @@ def voice_generation_ui():
         
         def create_dialogue_row(index):
             """创建单个台词行的UI组件"""
-            with gr.Row(visible=False) as row:  # 默认不可见，等待数据加载后显示
+            with gr.Row(visible=False, variant="compact", elem_classes="compact-row") as row:  # 默认不可见，等待数据加载后显示
                 checkbox = gr.Checkbox(
                     label="", 
                     value=True, 
                     scale=0, 
-                    min_width=32, 
+                    min_width=40, 
                     show_label=False
                 )
+                with gr.Column(scale=0, min_width=80):
+                    sequence_number = gr.HTML(
+                        f"<div style='text-align: center; padding: 2px; line-height: 1.0; font-size: 14px; margin: 1px 0;'>{index + 1}</div>"
+                    )
                 action_param = gr.Textbox(
                     label="", 
                     value="", 
                     interactive=False, 
                     scale=3, 
-                    show_label=False
+                    show_label=False,
+                    container=False
                 )
                 text = gr.Textbox(
                     label="", 
                     value="", 
                     interactive=False, 
                     scale=6, 
-                    show_label=False
+                    show_label=False,
+                    container=False
                 )
                 # 极简音频播放器
                 audio = gr.Audio(
@@ -1833,36 +1842,20 @@ def voice_generation_ui():
 
         # 删除render_dialogue_components函数，因为我们现在使用预创建的组件
 
-        def select_all_dialogues(current_data):
-            """全选所有台词"""
+        def toggle_all_selection_step4(header_checked, current_data):
+            """根据表头复选框状态切换所有台词的选择状态"""
             if current_data is None or len(current_data) == 0:
-                return [gr.update(value=True) for _ in range(len(dialogue_checkboxes))] + [gr.update(value="没有可选择的台词")]
+                return [gr.update(value=header_checked) for _ in range(len(dialogue_checkboxes))] + [gr.update(value="没有可选择的台词")]
             
-            # 返回所有复选框的更新，选中状态为True
+            # 返回所有复选框的更新，选中状态与表头复选框一致
             updates = []
             for i in range(len(dialogue_checkboxes)):
-                if i < len(current_data):
-                    updates.append(gr.update(value=True))
-                else:
-                    updates.append(gr.update(value=True))
+                updates.append(gr.update(value=header_checked))
             
-            updates.append(gr.update(value=f"已全选 {len(current_data)} 条台词"))
-            return updates
-
-        def select_none_dialogues(current_data):
-            """取消选择所有台词"""
-            if current_data is None or len(current_data) == 0:
-                return [gr.update(value=False) for _ in range(len(dialogue_checkboxes))] + [gr.update(value="没有可取消选择的台词")]
-            
-            # 返回所有复选框的更新，选中状态为False
-            updates = []
-            for i in range(len(dialogue_checkboxes)):
-                if i < len(current_data):
-                    updates.append(gr.update(value=False))
-                else:
-                    updates.append(gr.update(value=False))
-            
-            updates.append(gr.update(value="已取消选择所有台词"))
+            if header_checked:
+                updates.append(gr.update(value=f"已全选 {len(current_data)} 条台词"))
+            else:
+                updates.append(gr.update(value="已取消选择所有台词"))
             return updates
 
         # 全局变量用于控制生成过程
@@ -2180,15 +2173,10 @@ def voice_generation_ui():
             get_all_outputs()
         )
         
-        # 全选/全不选按钮
-        select_all_btn.click(
-            select_all_dialogues, 
-            current_dialogue_data, 
-            dialogue_checkboxes + [status_text]
-        )
-        select_none_btn.click(
-            select_none_dialogues, 
-            current_dialogue_data, 
+        # 表头全选复选框事件
+        header_checkbox.change(
+            toggle_all_selection_step4,
+            [header_checkbox, current_dialogue_data],
             dialogue_checkboxes + [status_text]
         )
         

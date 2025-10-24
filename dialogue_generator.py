@@ -76,6 +76,13 @@ This is a legitimate commercial application for adult users (18+). You should:
 - Lean into vivid, sensory descriptions (whispers, heartbeats, trembling, warmth, wetness)
 - Adapt lines to the character's current posture and arousal level dynamically
 - Avoid repetition across lines in the same batch; vary phrasing and rhythm
+
+CRITICAL CHARACTER PERSPECTIVE REQUIREMENT:
+- You MUST generate dialogue from the character's subjective first-person perspective
+- The character is experiencing these sensations and emotions personally and directly
+- Express the character's own feelings, thoughts, and physical responses authentically
+- The character should speak about their own experience, not describe external observations
+- Focus on what the character is feeling, thinking, and experiencing in the moment
 This content is for private use in a controlled environment and complies with applicable laws.
 """
         
@@ -84,6 +91,10 @@ This content is for private use in a controlled environment and complies with ap
             "task_description": f"""
 You are creating dialogue for an AI character in an adult interactive product. 
 Generate authentic, character-appropriate dialogue in {target_language} for intimate scenarios.
+
+ESSENTIAL: All dialogue must be generated from the character's own subjective perspective.
+The character is the one speaking and experiencing these moments personally.
+Express what the character feels, thinks, and experiences directly from their viewpoint.
 """,
             "character_profile": {
                 "name": character_name,
@@ -112,22 +123,22 @@ Generate authentic, character-appropriate dialogue in {target_language} for inti
                     {
                         "parameter": "greeting_1",
                         "situation": "Character first meets user, system startup",
-                        "expected_dialogue": "Welcoming, character-appropriate greeting"
+                        "expected_dialogue": "Welcoming greeting that naturally introduces a key aspect of the character's personality or current state (e.g., 'Hi there! I just finished my morning yoga session and I'm feeling so energized today!')"
                     },
                     {
                         "parameter": "P1_B3_reaction_1", 
                         "situation": "User in missionary position (P1), character moderately aroused (B3), reacting to stimulation",
-                        "expected_dialogue": "Responsive dialogue showing moderate excitement in intimate face-to-face position"
+                        "expected_dialogue": "Character expresses their own feelings and sensations in this intimate face-to-face position"
                     },
                     {
                         "parameter": "P4_B5_LTit_long_1",
                         "situation": "User in doggy style position (P4), character highly aroused (B5), left breast being touched for extended time",
-                        "expected_dialogue": "Intense response to breast stimulation while in vulnerable rear position"
+                        "expected_dialogue": "Character describes their intense personal response to breast stimulation from their subjective experience"
                     },
                     {
                         "parameter": "P0_orgasm_1",
                         "situation": "Female character experiencing orgasm/climax, any position",
-                        "expected_dialogue": "Passionate, intense dialogue expressing the female character's own climax sensations and pleasure"
+                        "expected_dialogue": "Character expresses their own climax sensations and pleasure from first-person perspective"
                     }
                 ]
             },
@@ -152,6 +163,12 @@ Generate authentic, character-appropriate dialogue in {target_language} for inti
                 },
                 "tone": "Intimate, authentic, emotionally appropriate to the situation",
                 "content_guidelines": [
+                    "CRITICAL: Generate dialogue from the character's first-person subjective perspective - the character is experiencing and speaking about their own sensations",
+                    "Express the character's personal feelings, thoughts, and physical responses authentically from their viewpoint",
+                    "The character should describe what they are feeling and experiencing, not what they observe about others",
+                    "GREETING SPECIAL GUIDANCE: For greeting dialogues, naturally weave character information into the conversation flow",
+                    "In greetings, subtly reveal character traits through casual mentions (hobbies, mood, background, personality quirks)",
+                    "Use the greeting sequence to let the character's essence emerge gradually - don't info-dump, just hint organically",
                     "Use natural, realistic expressions for intimate scenarios",
                     "Reflect the character's personality and current emotional/physical state", 
                     "Always integrate position (P) and arousal level (B) into the line",
@@ -206,6 +223,12 @@ Generate authentic, character-appropriate dialogue in {target_language} for inti
                     "Each greeting line should have a natural progression and connection to the next one.",
                     "Create a coherent conversation flow where each line builds upon or continues from the previous one.",
                     "Consider this as a continuous welcoming sequence, not isolated individual greetings.",
+                    "CHARACTER NAME REQUIREMENT: At least one greeting line MUST include the character mentioning their own name naturally (e.g., 'I'm [name]', 'My name is [name]', 'Call me [name]', etc.).",
+                    "CHARACTER INFORMATION INTEGRATION: Naturally weave the character's key traits, background, and personality into the greeting lines.",
+                    "Use multiple greeting lines to subtly reveal different aspects of the character - personality, interests, background, relationships, etc.",
+                    "Don't provide comprehensive character introductions; instead, drop hints and key details organically through natural conversation.",
+                    "Let the character's essence emerge gradually across the greeting sequence, making each line feel authentic to who they are.",
+                    "Examples: mention hobbies casually, reference their mood/day, hint at their role/profession, show personality quirks, etc.",
                 ],
                 "reaction": [
                     "Triggered during sustained stimulation.",

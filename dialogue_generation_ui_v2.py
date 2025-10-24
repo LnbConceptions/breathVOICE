@@ -77,17 +77,25 @@ def build_dialogue_generation_ui(db):
             ap_texts: List[gr.Textbox] = []
             line_texts: List[gr.Textbox] = []
 
-            # 全选/全不选置于顶部
-            with gr.Row():
-                select_all_btn = gr.Button("全选")
-                select_none_btn = gr.Button("全不选")
-
             with gr.Column():
-                for sel, ap, tx in rows_init:
-                    with gr.Row():
-                        chk = gr.Checkbox(label="", value=True, scale=0, min_width=32, show_label=False)  # 默认选中
-                        ap_tb = gr.Textbox(label="", value=ap, interactive=False, scale=3, show_label=False)
-                        line_tb = gr.Textbox(label="", value=tx or "", interactive=True, scale=9, show_label=False)
+                # 表头行，包含全选复选框和序号列
+                with gr.Row(variant="compact", elem_classes="compact-row"):
+                    header_checkbox = gr.Checkbox(label="", value=True, scale=0, min_width=40, show_label=False)  # 全选复选框
+                    with gr.Column(scale=0, min_width=80):
+                        gr.HTML("<div style='text-align: center; font-weight: bold; padding: 2px; line-height: 1.0; margin: 1px 0;'>序号</div>")
+                    with gr.Column(scale=3):
+                        gr.HTML("<div style='text-align: center; font-weight: bold; padding: 2px; line-height: 1.0; margin: 1px 0;'>动作参数</div>")
+                    with gr.Column(scale=9):
+                        gr.HTML("<div style='text-align: center; font-weight: bold; padding: 2px; line-height: 1.0; margin: 1px 0;'>台词</div>")
+                
+                # 数据行
+                for idx, (sel, ap, tx) in enumerate(rows_init):
+                    with gr.Row(variant="compact", elem_classes="compact-row"):
+                        chk = gr.Checkbox(label="", value=True, scale=0, min_width=40, show_label=False)  # 默认选中
+                        with gr.Column(scale=0, min_width=80):
+                            seq_num = gr.HTML(f"<div style='text-align: center; padding: 2px; line-height: 1.0; font-size: 14px; margin: 1px 0;'>{idx + 1}</div>")
+                        ap_tb = gr.Textbox(label="", value=ap, interactive=False, scale=3, show_label=False, container=False)
+                        line_tb = gr.Textbox(label="", value=tx or "", interactive=True, scale=9, show_label=False, container=False)
                     select_checks.append(chk)
                     ap_texts.append(ap_tb)
                     line_texts.append(line_tb)
@@ -97,9 +105,12 @@ def build_dialogue_generation_ui(db):
 
             def select_none_v2():
                 return [False] * len(select_checks)
+            
+            def toggle_all_selection(header_state):
+                """根据表头复选框状态切换所有选择"""
+                return [header_state] * len(select_checks)
 
-            select_all_btn.click(fn=select_all_v2, inputs=[], outputs=select_checks)
-            select_none_btn.click(fn=select_none_v2, inputs=[], outputs=select_checks)
+            header_checkbox.change(fn=toggle_all_selection, inputs=[header_checkbox], outputs=select_checks)
 
             # 生成流函数（由‘开始生成’触发），支持停止标志
             def gen_selected_v2(character_id: int, llm_config_id: int, language: str, *vals):

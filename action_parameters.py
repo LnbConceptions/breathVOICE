@@ -1,6 +1,6 @@
 # 所有动作参数列表 - 从台词模版.csv自动生成
-# 总共434个参数，分为6个类别
-# 自动生成时间: 2025-10-23 22:08:42
+# 总共242个参数，分为6个类别
+# 自动生成时间: 2025-10-24 11:54:13
 
 import csv
 import os
@@ -13,117 +13,84 @@ GREETING_PARAMS = [
     "greeting_9", "greeting_10"
 ]
 
-# 高潮台词 (35个)
+# 高潮台词 (21个)
 ORGASM_PARAMS = [
-    "P1_orgasm_1", "P1_orgasm_2", "P1_orgasm_3", "P1_orgasm_4",
-    "P1_orgasm_5", "P2_orgasm_1", "P2_orgasm_2", "P2_orgasm_3",
-    "P2_orgasm_4", "P2_orgasm_5", "P3_orgasm_1", "P3_orgasm_2",
-    "P3_orgasm_3", "P3_orgasm_4", "P3_orgasm_5", "P4_orgasm_1",
-    "P4_orgasm_2", "P4_orgasm_3", "P4_orgasm_4", "P4_orgasm_5",
-    "P5_orgasm_1", "P5_orgasm_2", "P5_orgasm_3", "P5_orgasm_4",
-    "P5_orgasm_5", "P6_orgasm_1", "P6_orgasm_2", "P6_orgasm_3",
-    "P6_orgasm_4", "P6_orgasm_5", "P0_orgasm_1", "P0_orgasm_2",
-    "P0_orgasm_3", "P0_orgasm_4", "P0_orgasm_5"
+    "P1_orgasm_1", "P1_orgasm_2", "P1_orgasm_3", "P2_orgasm_1",
+    "P2_orgasm_2", "P2_orgasm_3", "P3_orgasm_1", "P3_orgasm_2",
+    "P3_orgasm_3", "P4_orgasm_1", "P4_orgasm_2", "P4_orgasm_3",
+    "P5_orgasm_1", "P5_orgasm_2", "P5_orgasm_3", "P6_orgasm_1",
+    "P6_orgasm_2", "P6_orgasm_3", "P0_orgasm_1", "P0_orgasm_2",
+    "P0_orgasm_3"
 ]
 
-# 兴奋台词 (92个)
+# 兴奋台词 (59个)
 REACTION_PARAMS = [
     "P0_B0_reaction_1", "P0_B0_reaction_2", "P0_B0_reaction_3", "P0_B0_reaction_4",
-    "P0_B0_reaction_5", "P0_B0_reaction_6", "P0_B0_reaction_7", "P0_B0_reaction_8",
-    "P0_B0_reaction_9", "P0_B0_reaction_10", "P1_B1_B2_reaction_1", "P1_B1_B2_reaction_2",
-    "P1_B1_B2_reaction_3", "P1_B1_B2_reaction_4", "P1_B1_B2_reaction_5", "P2_B1_B2_reaction_1",
-    "P2_B1_B2_reaction_2", "P2_B1_B2_reaction_3", "P2_B1_B2_reaction_4", "P3_B1_B2_reaction_1",
-    "P3_B1_B2_reaction_2", "P3_B1_B2_reaction_3", "P3_B1_B2_reaction_4", "P4_B1_B2_reaction_1",
-    "P4_B1_B2_reaction_2", "P4_B1_B2_reaction_3", "P4_B1_B2_reaction_4", "P4_B1_B2_reaction_5",
-    "P5_B1_B2_reaction_1", "P5_B1_B2_reaction_2", "P5_B1_B2_reaction_3", "P5_B1_B2_reaction_4",
-    "P5_B1_B2_reaction_5", "P6_B1_B2_reaction_1", "P6_B1_B2_reaction_2", "P6_B1_B2_reaction_3",
-    "P6_B1_B2_reaction_4", "P6_B1_B2_reaction_5", "P1_B3_B4_reaction_1", "P1_B3_B4_reaction_2",
-    "P1_B3_B4_reaction_3", "P1_B3_B4_reaction_4", "P1_B3_B4_reaction_5", "P2_B3_B4_reaction_1",
-    "P2_B3_B4_reaction_2", "P2_B3_B4_reaction_3", "P2_B3_B4_reaction_4", "P3_B3_B4_reaction_1",
-    "P3_B3_B4_reaction_2", "P3_B3_B4_reaction_3", "P3_B3_B4_reaction_4", "P4_B3_B4_reaction_1",
-    "P4_B3_B4_reaction_2", "P4_B3_B4_reaction_3", "P4_B3_B4_reaction_4", "P4_B3_B4_reaction_5",
-    "P5_B3_B4_reaction_1", "P5_B3_B4_reaction_2", "P5_B3_B4_reaction_3", "P5_B3_B4_reaction_4",
-    "P5_B3_B4_reaction_5", "P6_B3_B4_reaction_1", "P6_B3_B4_reaction_2", "P6_B3_B4_reaction_3",
-    "P6_B3_B4_reaction_4", "P1_B5_reaction_1", "P1_B5_reaction_2", "P1_B5_reaction_3",
-    "P1_B5_reaction_4", "P1_B5_reaction_5", "P2_B5_reaction_1", "P2_B5_reaction_2",
-    "P2_B5_reaction_3", "P2_B5_reaction_4", "P3_B5_reaction_1", "P3_B5_reaction_2",
-    "P3_B5_reaction_3", "P3_B5_reaction_4", "P4_B5_reaction_1", "P4_B5_reaction_2",
-    "P4_B5_reaction_3", "P4_B5_reaction_4", "P4_B5_reaction_5", "P5_B5_reaction_1",
-    "P5_B5_reaction_2", "P5_B5_reaction_3", "P5_B5_reaction_4", "P5_B5_reaction_5",
-    "P6_B5_reaction_1", "P6_B5_reaction_2", "P6_B5_reaction_3", "P6_B5_reaction_4"
+    "P0_B0_reaction_5", "P1_B1_B2_reaction_1", "P1_B1_B2_reaction_2", "P1_B1_B2_reaction_3",
+    "P2_B1_B2_reaction_1", "P2_B1_B2_reaction_2", "P2_B1_B2_reaction_3", "P3_B1_B2_reaction_1",
+    "P3_B1_B2_reaction_2", "P3_B1_B2_reaction_3", "P4_B1_B2_reaction_1", "P4_B1_B2_reaction_2",
+    "P4_B1_B2_reaction_3", "P5_B1_B2_reaction_1", "P5_B1_B2_reaction_2", "P5_B1_B2_reaction_3",
+    "P6_B1_B2_reaction_1", "P6_B1_B2_reaction_2", "P6_B1_B2_reaction_3", "P1_B3_B4_reaction_1",
+    "P1_B3_B4_reaction_2", "P1_B3_B4_reaction_3", "P2_B3_B4_reaction_1", "P2_B3_B4_reaction_2",
+    "P2_B3_B4_reaction_3", "P3_B3_B4_reaction_1", "P3_B3_B4_reaction_2", "P3_B3_B4_reaction_3",
+    "P4_B3_B4_reaction_1", "P4_B3_B4_reaction_2", "P4_B3_B4_reaction_3", "P5_B3_B4_reaction_1",
+    "P5_B3_B4_reaction_2", "P5_B3_B4_reaction_3", "P6_B3_B4_reaction_1", "P6_B3_B4_reaction_2",
+    "P6_B3_B4_reaction_3", "P1_B5_reaction_1", "P1_B5_reaction_2", "P1_B5_reaction_3",
+    "P2_B5_reaction_1", "P2_B5_reaction_2", "P2_B5_reaction_3", "P3_B5_reaction_1",
+    "P3_B5_reaction_2", "P3_B5_reaction_3", "P4_B5_reaction_1", "P4_B5_reaction_2",
+    "P4_B5_reaction_3", "P5_B5_reaction_1", "P5_B5_reaction_2", "P5_B5_reaction_3",
+    "P6_B5_reaction_1", "P6_B5_reaction_2", "P6_B5_reaction_3"
 ]
 
-# 挑逗台词 (91个)
+# 挑逗台词 (59个)
 TEASE_PARAMS = [
     "P0_B0_tease_1", "P0_B0_tease_2", "P0_B0_tease_3", "P0_B0_tease_4",
-    "P0_B0_tease_5", "P0_B0_tease_6", "P0_B0_tease_7", "P0_B0_tease_8",
-    "P0_B0_tease_9", "P0_B0_tease_10", "P1_B1_B2_tease_1", "P1_B1_B2_tease_2",
-    "P1_B1_B2_tease_3", "P1_B1_B2_tease_4", "P1_B1_B2_tease_5", "P2_B1_B2_tease_1",
-    "P2_B1_B2_tease_2", "P2_B1_B2_tease_3", "P2_B1_B2_tease_4", "P3_B1_B2_tease_1",
-    "P3_B1_B2_tease_2", "P3_B1_B2_tease_3", "P3_B1_B2_tease_4", "P4_B1_B2_tease_1",
-    "P4_B1_B2_tease_2", "P4_B1_B2_tease_3", "P4_B1_B2_tease_4", "P4_B1_B2_tease_5",
-    "P5_B1_B2_tease_1", "P5_B1_B2_tease_2", "P5_B1_B2_tease_3", "P5_B1_B2_tease_4",
-    "P5_B1_B2_tease_5", "P6_B1_B2_tease_1", "P6_B1_B2_tease_2", "P6_B1_B2_tease_3",
-    "P6_B1_B2_tease_4", "P6_B1_B2_tease_5", "P1_B3_B4_tease_1", "P1_B3_B4_tease_2",
-    "P1_B3_B4_tease_3", "P1_B3_B4_tease_4", "P1_B3_B4_tease_5", "P2_B3_B4_tease_1",
-    "P2_B3_B4_tease_2", "P2_B3_B4_tease_3", "P2_B3_B4_tease_4", "P3_B3_B4_tease_1",
-    "P3_B3_B4_tease_2", "P3_B3_B4_tease_3", "P3_B3_B4_tease_4", "P4_B3_B4_tease_1",
-    "P4_B3_B4_tease_2", "P4_B3_B4_tease_3", "P4_B3_B4_tease_4", "P4_B3_B4_tease_5",
-    "P5_B3_B4_tease_1", "P5_B3_B4_tease_2", "P5_B3_B4_tease_3", "P5_B3_B4_tease_4",
-    "P5_B3_B4_tease_5", "P6_B3_B4_tease_1", "P6_B3_B4_tease_2", "P6_B3_B4_tease_3",
-    "P6_B3_B4_tease_4", "P1_B5_tease_1", "P1_B5_tease_2", "P1_B5_tease_3",
-    "P1_B5_tease_4", "P1_B5_tease_5", "P2_B5_tease_1", "P2_B5_tease_2",
-    "P2_B5_tease_3", "P2_B5_tease_4", "P3_B5_tease_1", "P3_B5_tease_2",
-    "P3_B5_tease_3", "P3_B5_tease_4", "P4_B5_tease_1", "P4_B5_tease_2",
-    "P4_B5_tease_3", "P4_B5_tease_4", "P4_B5_tease_5", "P5_B5_tease_1",
-    "P5_B5_tease_2", "P5_B5_tease_3", "P5_B5_tease_4", "P5_B5_tease_5",
+    "P0_B0_tease_5", "P1_B1_B2_tease_1", "P1_B1_B2_tease_2", "P1_B1_B2_tease_3",
+    "P2_B1_B2_tease_1", "P2_B1_B2_tease_2", "P2_B1_B2_tease_3", "P3_B1_B2_tease_1",
+    "P3_B1_B2_tease_2", "P3_B1_B2_tease_3", "P4_B1_B2_tease_1", "P4_B1_B2_tease_2",
+    "P4_B1_B2_tease_3", "P5_B1_B2_tease_1", "P5_B1_B2_tease_2", "P5_B1_B2_tease_3",
+    "P6_B1_B2_tease_1", "P6_B1_B2_tease_2", "P6_B1_B2_tease_3", "P1_B3_B4_tease_1",
+    "P1_B3_B4_tease_2", "P1_B3_B4_tease_3", "P2_B3_B4_tease_1", "P2_B3_B4_tease_2",
+    "P2_B3_B4_tease_3", "P3_B3_B4_tease_1", "P3_B3_B4_tease_2", "P3_B3_B4_tease_3",
+    "P4_B3_B4_tease_1", "P4_B3_B4_tease_2", "P4_B3_B4_tease_3", "P5_B3_B4_tease_1",
+    "P5_B3_B4_tease_2", "P5_B3_B4_tease_3", "P6_B3_B4_tease_1", "P6_B3_B4_tease_2",
+    "P6_B3_B4_tease_3", "P1_B5_tease_1", "P1_B5_tease_2", "P1_B5_tease_3",
+    "P2_B5_tease_1", "P2_B5_tease_2", "P2_B5_tease_3", "P3_B5_tease_1",
+    "P3_B5_tease_2", "P3_B5_tease_3", "P4_B5_tease_1", "P4_B5_tease_2",
+    "P4_B5_tease_3", "P5_B5_tease_1", "P5_B5_tease_2", "P5_B5_tease_3",
     "P6_B5_tease_1", "P6_B5_tease_2", "P6_B5_tease_3"
 ]
 
-# 冲击台词 (32个)
+# 冲击台词 (21个)
 IMPACT_PARAMS = [
-    "P1_B0_impact_1", "P1_B0_impact_2", "P1_B0_impact_3", "P1_B0_impact_4",
-    "P1_B0_impact_5", "P2_B0_impact_1", "P2_B0_impact_2", "P2_B0_impact_3",
-    "P2_B0_impact_4", "P3_B0_impact_1", "P3_B0_impact_2", "P3_B0_impact_3",
-    "P3_B0_impact_4", "P4_B0_impact_1", "P4_B0_impact_2", "P4_B0_impact_3",
-    "P4_B0_impact_4", "P4_B0_impact_5", "P5_B0_impact_1", "P5_B0_impact_2",
-    "P5_B0_impact_3", "P5_B0_impact_4", "P5_B0_impact_5", "P6_B0_impact_1",
-    "P6_B0_impact_2", "P6_B0_impact_3", "P6_B0_impact_4", "P0_B0_impact_1",
-    "P0_B0_impact_2", "P0_B0_impact_3", "P0_B0_impact_4", "P0_B0_impact_5"
+    "P1_B0_impact_1", "P1_B0_impact_2", "P1_B0_impact_3", "P2_B0_impact_1",
+    "P2_B0_impact_2", "P2_B0_impact_3", "P3_B0_impact_1", "P3_B0_impact_2",
+    "P3_B0_impact_3", "P4_B0_impact_1", "P4_B0_impact_2", "P4_B0_impact_3",
+    "P5_B0_impact_1", "P5_B0_impact_2", "P5_B0_impact_3", "P6_B0_impact_1",
+    "P6_B0_impact_2", "P6_B0_impact_3", "P0_B0_impact_1", "P0_B0_impact_2",
+    "P0_B0_impact_3"
 ]
 
-# 触摸台词 (119个)
+# 触摸台词 (72个)
 TOUCH_PARAMS = [
-    "P0_B1_B2_LTit_long_1", "P0_B1_B2_LTit_long_2", "P0_B1_B2_LTit_long_3", "P0_B1_B2_LTit_long_4",
-    "P0_B1_B2_LTit_long_5", "P0_B1_B2_RTit_long_1", "P0_B1_B2_RTit_long_2", "P0_B1_B2_RTit_long_3",
-    "P0_B1_B2_RTit_long_4", "P0_B1_B2_RTit_long_5", "P0_B1_B2_LTit_short_1", "P0_B1_B2_LTit_short_2",
-    "P0_B1_B2_LTit_short_3", "P0_B1_B2_LTit_short_4", "P0_B1_B2_LTit_short_5", "P0_B1_B2_RTit_short_1",
-    "P0_B1_B2_RTit_short_2", "P0_B1_B2_RTit_short_3", "P0_B1_B2_RTit_short_4", "P0_B1_B2_RTit_short_5",
-    "P0_B3_B4_LTit_long_1", "P0_B3_B4_LTit_long_2", "P0_B3_B4_LTit_long_3", "P0_B3_B4_LTit_long_4",
-    "P0_B3_B4_LTit_long_5", "P0_B3_B4_RTit_long_1", "P0_B3_B4_RTit_long_2", "P0_B3_B4_RTit_long_3",
-    "P0_B3_B4_RTit_long_4", "P0_B3_B4_RTit_long_5", "P0_B3_B4_LTit_short_1", "P0_B3_B4_LTit_short_2",
-    "P0_B3_B4_LTit_short_3", "P0_B3_B4_LTit_short_4", "P0_B3_B4_LTit_short_5", "P0_B3_B4_RTit_short_1",
-    "P0_B3_B4_RTit_short_2", "P0_B3_B4_RTit_short_3", "P0_B3_B4_RTit_short_4", "P0_B3_B4_RTit_short_5",
-    "P0_B5_LTit_long_1", "P0_B5_LTit_long_2", "P0_B5_LTit_long_3", "P0_B5_LTit_long_4",
-    "P0_B5_LTit_long_5", "P0_B5_RTit_long_1", "P0_B5_RTit_long_2", "P0_B5_RTit_long_3",
-    "P0_B5_RTit_long_4", "P0_B5_RTit_long_5", "P0_B5_LTit_short_1", "P0_B5_LTit_short_2",
-    "P0_B5_LTit_short_3", "P0_B5_LTit_short_4", "P0_B5_LTit_short_5", "P0_B5_RTit_short_1",
-    "P0_B5_RTit_short_2", "P0_B5_RTit_short_3", "P0_B5_RTit_short_4", "P0_B5_RTit_short_5",
-    "P0_B1_B2_LButt_long_1", "P0_B1_B2_LButt_long_2", "P0_B1_B2_LButt_long_3", "P0_B1_B2_LButt_long_4",
-    "P0_B1_B2_LButt_long_5", "P0_B1_B2_RButt_long_1", "P0_B1_B2_RButt_long_2", "P0_B1_B2_RButt_long_3",
-    "P0_B1_B2_RButt_long_4", "P0_B1_B2_RButt_long_5", "P0_B1_B2_LButt_short_1", "P0_B1_B2_LButt_short_2",
-    "P0_B1_B2_LButt_short_3", "P0_B1_B2_LButt_short_4", "P0_B1_B2_LButt_short_5", "P0_B1_B2_RButt_short_1",
-    "P0_B1_B2_RButt_short_2", "P0_B1_B2_RButt_short_3", "P0_B1_B2_RButt_short_4", "P0_B1_B2_RButt_short_5",
-    "P0_B3_B4_LButt_long_1", "P0_B3_B4_LButt_long_2", "P0_B3_B4_LButt_long_3", "P0_B3_B4_LButt_long_4",
-    "P0_B3_B4_LButt_long_5", "P0_B3_B4_RButt_long_1", "P0_B3_B4_RButt_long_2", "P0_B3_B4_RButt_long_3",
-    "P0_B3_B4_RButt_long_4", "P0_B3_B4_RButt_long_5", "P0_B3_B4_LButt_short_1", "P0_B3_B4_LButt_short_2",
-    "P0_B3_B4_LButt_short_3", "P0_B3_B4_LButt_short_4", "P0_B3_B4_LButt_short_5", "P0_B3_B4_RButt_short_1",
-    "P0_B3_B4_RButt_short_2", "P0_B3_B4_RButt_short_3", "P0_B3_B4_RButt_short_4", "P0_B3_B4_RButt_short_5",
-    "P0_B5_LButt_long_1", "P0_B5_LButt_long_2", "P0_B5_LButt_long_3", "P0_B5_LButt_long_4",
-    "P0_B5_LButt_long_5", "P0_B5_RButt_long_1", "P0_B5_RButt_long_2", "P0_B5_RButt_long_3",
-    "P0_B5_RButt_long_4", "P0_B5_RButt_long_5", "P0_B5_LButt_short_1", "P0_B5_LButt_short_2",
-    "P0_B5_LButt_short_3", "P0_B5_LButt_short_4", "P0_B5_LButt_short_5", "P0_B5_RButt_short_1",
-    "P0_B5_RButt_short_2", "P0_B5_RButt_short_3", "P0_B5_RButt_short_4"
+    "P0_B1_B2_LTit_long_1", "P0_B1_B2_LTit_long_2", "P0_B1_B2_LTit_long_3", "P0_B1_B2_RTit_long_1",
+    "P0_B1_B2_RTit_long_2", "P0_B1_B2_RTit_long_3", "P0_B1_B2_LTit_short_1", "P0_B1_B2_LTit_short_2",
+    "P0_B1_B2_LTit_short_3", "P0_B1_B2_RTit_short_1", "P0_B1_B2_RTit_short_2", "P0_B1_B2_RTit_short_3",
+    "P0_B3_B4_LTit_long_1", "P0_B3_B4_LTit_long_2", "P0_B3_B4_LTit_long_3", "P0_B3_B4_RTit_long_1",
+    "P0_B3_B4_RTit_long_2", "P0_B3_B4_RTit_long_3", "P0_B3_B4_LTit_short_1", "P0_B3_B4_LTit_short_2",
+    "P0_B3_B4_LTit_short_3", "P0_B3_B4_RTit_short_1", "P0_B3_B4_RTit_short_2", "P0_B3_B4_RTit_short_3",
+    "P0_B5_LTit_long_1", "P0_B5_LTit_long_2", "P0_B5_LTit_long_3", "P0_B5_RTit_long_1",
+    "P0_B5_RTit_long_2", "P0_B5_RTit_long_3", "P0_B5_LTit_short_1", "P0_B5_LTit_short_2",
+    "P0_B5_LTit_short_3", "P0_B5_RTit_short_1", "P0_B5_RTit_short_2", "P0_B5_RTit_short_3",
+    "P0_B1_B2_LButt_long_1", "P0_B1_B2_LButt_long_2", "P0_B1_B2_LButt_long_3", "P0_B1_B2_RButt_long_1",
+    "P0_B1_B2_RButt_long_2", "P0_B1_B2_RButt_long_3", "P0_B1_B2_LButt_short_1", "P0_B1_B2_LButt_short_2",
+    "P0_B1_B2_LButt_short_3", "P0_B1_B2_RButt_short_1", "P0_B1_B2_RButt_short_2", "P0_B1_B2_RButt_short_3",
+    "P0_B3_B4_LButt_long_1", "P0_B3_B4_LButt_long_2", "P0_B3_B4_LButt_long_3", "P0_B3_B4_RButt_long_1",
+    "P0_B3_B4_RButt_long_2", "P0_B3_B4_RButt_long_3", "P0_B3_B4_LButt_short_1", "P0_B3_B4_LButt_short_2",
+    "P0_B3_B4_LButt_short_3", "P0_B3_B4_RButt_short_1", "P0_B3_B4_RButt_short_2", "P0_B3_B4_RButt_short_3",
+    "P0_B5_LButt_long_1", "P0_B5_LButt_long_2", "P0_B5_LButt_long_3", "P0_B5_RButt_long_1",
+    "P0_B5_RButt_long_2", "P0_B5_RButt_long_3", "P0_B5_LButt_short_1", "P0_B5_LButt_short_2",
+    "P0_B5_LButt_short_3", "P0_B5_RButt_short_1", "P0_B5_RButt_short_2", "P0_B5_RButt_short_3"
 ]
 
 # 所有参数的完整列表
